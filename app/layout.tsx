@@ -1,19 +1,17 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
-    default: "Bahia News - O portal de notícias da Bahia",
-    template: "%s | Bahia News",
+    default: "Diário do Farol — O jornal da Bahia",
+    template: "%s | Diário do Farol",
   },
-  description: "Fique por dentro das principais notícias da Bahia e do Brasil",
+  description:
+    "O portal de notícias da Bahia. Política, Cultura, Carnaval, Esportes, Gastronomia e Turismo.",
   openGraph: {
-    title: "Bahia News",
-    description: "O portal de notícias da Bahia",
-    siteName: "Bahia News",
+    title: "Diário do Farol",
+    description: "O jornal da Bahia de Todos os Santos",
+    siteName: "Diário do Farol",
     type: "website",
     locale: "pt_BR",
   },
@@ -26,7 +24,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap"
+        />
+      </head>
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20 selection:text-accent">
+        {children}
+      </body>
     </html>
   )
 }

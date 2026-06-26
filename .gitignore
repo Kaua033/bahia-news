@@ -38,3 +38,6 @@ prisma/migrations/
 
 # skills
 skills/
+
+task.md
+.env.example

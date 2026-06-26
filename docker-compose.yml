@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bahia-news-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bahia_news
+      POSTGRES_PASSWORD: bahia_news_pass
+      POSTGRES_DB: bahia_news
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bahia_news"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: bahia-news-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://bahia_news:bahia_news_pass@postgres:5432/bahia_news"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: "seu-secret-aqui-mude-isso"
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}"
+      CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY}"
+      CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@bahianews.com.br}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-senha-segura-123}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "npx prisma@5.14.0 db push && node server.js"
+
+volumes:
+  postgres_data:
