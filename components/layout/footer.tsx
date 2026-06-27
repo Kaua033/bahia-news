@@ -64,25 +64,17 @@ export function Footer() {
 
           <div>
             <h5 className="text-xs font-mono font-semibold uppercase tracking-widest mb-4 text-background/50">
-              Contato
+              Criador
             </h5>
             <ul className="space-y-2 text-sm text-background/70">
-              <li>Rua Chile, 42 — Pelourinho</li>
-              <li>Salvador, BA — 40020-010</li>
+              <li>Kauã Silva Bispo</li>
+              <li>Serra do Ramalho, Bahia</li>
               <li>
                 <a
-                  href="mailto:redacao@diariodofarol.com.br"
+                  href="mailto:kauasilvabispo119@gmail.com"
                   className="hover:text-background transition-colors duration-300"
                 >
-                  redacao@diariodofarol.com.br
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:+5571987654321"
-                  className="hover:text-background transition-colors duration-300"
-                >
-                  (71) 98765-4321
+                  kauasilvabispo119@gmail.com
                 </a>
               </li>
             </ul>

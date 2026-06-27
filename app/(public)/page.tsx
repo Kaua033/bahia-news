@@ -29,11 +29,6 @@ function fmt(date: Date) {
   return `${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`
 }
 
-function nowDate() {
-  const d = new Date()
-  return `${weekdays[d.getDay()]}, ${d.getDate()} de ${months[d.getMonth()]} de ${d.getFullYear()}`
-}
-
 function formatDate(dateStr: string) {
   return fmt(new Date(dateStr))
 }
@@ -60,20 +55,24 @@ interface Article {
   content: string | null
 }
 
+const secoes = ["Todas", "Política", "Cultura", "Carnaval", "Esportes", "Gastronomia", "Turismo"]
+
 export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [mounted, setMounted] = useState(false)
+  const [secaoAtiva, setSecaoAtiva] = useState("Todas")
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
-    fetch("/api/news")
+    const query = secaoAtiva === "Todas" ? "Bahia" : `${secaoAtiva} Bahia`
+    fetch(`/api/news?q=${encodeURIComponent(query)}`)
       .then((res) => res.json())
       .then((data) => {
         setArticles(data.articles || [])
       })
       .catch(console.error)
-  }, [])
+  }, [secaoAtiva])
 
   useEffect(() => {
     if (!mounted) return
@@ -98,10 +97,30 @@ export default function HomePage() {
   const hero = articles[0]
   const sidebar = articles.slice(1, 4)
   const destaques = articles.slice(4, 7)
+  const opinioes = articles.slice(7, 10)
   const heroDate = mounted ? fmt(new Date()) : ""
 
   return (
     <div ref={rootRef}>
+      {/* FILTRO DE SEÇÕES */}
+      <div className="mx-auto max-w-7xl px-4 pt-6">
+        <div className="flex flex-wrap items-center justify-center gap-2 border-b border-border pb-4">
+          {secoes.map((sec) => (
+            <button
+              key={sec}
+              onClick={() => setSecaoAtiva(sec)}
+              className={`font-mono text-xs uppercase tracking-widest transition-colors duration-300 px-3 py-1.5 rounded-full ${
+                secaoAtiva === sec
+                  ? "bg-accent text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {sec}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* HERO + SIDEBAR */}
       <section className="mx-auto max-w-7xl px-4 pt-10">
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
@@ -230,40 +249,23 @@ export default function HomePage() {
           Opinião & Análise
         </h3>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              label: "Editorial",
-              headline: "A Bahia precisa de um plano para suas águas",
-              author: "Editorial do Diário",
-              excerpt: "A Baía de Todos os Santos, berço da colonização brasileira, enfrenta desafios ambientais que exigem ação coordenada entre municípios, estado e sociedade civil.",
-            },
-            {
-              label: "Coluna",
-              headline: "Lavagem do Bonfim: fé, resistência e o futuro das festas populares",
-              author: "Por Teresa Conceição",
-              excerpt: "Entre as fitinhas coloridas e a água de cheiro, a celebração centenária ensina à cidade o valor do sincretismo como identidade cultural.",
-            },
-            {
-              label: "Análise",
-              headline: "Morro de São Paulo e o turismo sustentável: modelo para o litoral nordestino",
-              author: "Por Raimundo Alves",
-              excerpt: "A ilha de Tinharé demonstra que é possível conciliar preservação ambiental e desenvolvimento econômico — desde que a comunidade local participe das decisões.",
-            },
-          ].map((opinion) => (
-            <article key={opinion.headline} className="fade-on-scroll group cursor-pointer border-t-[3px] border-bahia-blue pt-6">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-bahia-blue">
-                {opinion.label}
-              </span>
-              <h3 className="mt-3 font-display text-xl font-bold leading-snug text-foreground transition-colors duration-300 group-hover:text-bahia-blue">
-                {opinion.headline}
-              </h3>
-              <span className="font-mono text-xs tracking-wider text-muted-foreground">
-                {opinion.author}
-              </span>
-              <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
-                {opinion.excerpt}
-              </p>
-            </article>
+          {opinioes.map((opinion, i) => (
+            <a key={opinion.url} href={opinion.url} target="_blank" rel="noopener noreferrer">
+              <article className="fade-on-scroll group cursor-pointer border-t-[3px] border-bahia-blue pt-6">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-bahia-blue">
+                  {["Editorial", "Coluna", "Análise"][i] || "Opinião"}
+                </span>
+                <h3 className="mt-3 font-display text-xl font-bold leading-snug text-foreground transition-colors duration-300 group-hover:text-bahia-blue">
+                  {opinion.title}
+                </h3>
+                <span className="font-mono text-xs tracking-wider text-muted-foreground">
+                  {opinion.author || opinion.source?.name || "Redação"}
+                </span>
+                <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+                  {opinion.description}
+                </p>
+              </article>
+            </a>
           ))}
         </div>
       </section>
