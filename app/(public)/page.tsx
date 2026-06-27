@@ -92,7 +92,7 @@ export default function HomePage() {
     const fadeEls = root.querySelectorAll(".fade-on-scroll")
     fadeEls.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
-  }, [mounted, articles])
+  }, [mounted, articles, secaoAtiva])
 
   const hero = articles[0]
   const sidebar = articles.slice(1, 4)
@@ -121,6 +121,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div key={secaoAtiva} className="animate-fade-slide">
       {/* HERO + SIDEBAR */}
       <section className="mx-auto max-w-7xl px-4 pt-10">
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
@@ -269,6 +270,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      </div>
     </div>
   )
 }
