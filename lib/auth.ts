@@ -11,8 +11,14 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000
 
 const loginAttempts = new Map<string, { count: number; lockedUntil: number }>()
 
+import { headers } from "next/headers"
+
 function getClientIp(): string {
-  return "global"
+  try {
+    return headers().get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  } catch {
+    return "build"
+  }
 }
 
 function isLockedOut(identifier: string): boolean {
