@@ -35,6 +35,7 @@
     "@tiptap/pm": "^2.2.4",
     "@tiptap/react": "^2.2.4",
     "@tiptap/starter-kit": "^2.2.4",
+    "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "cloudinary": "^1.41.3",
