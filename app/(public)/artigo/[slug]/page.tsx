@@ -19,18 +19,30 @@ const FALLBACK_IMG = "https://media.base44.com/images/public/6a3e9f3196fa26d5be6
 export default function ArticlePage({ params }: { params: { slug: string } }) {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState(false)
 
   useEffect(() => {
+    setApiError(false)
     fetch("/api/news")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then((data) => {
+        if (!data.articles) {
+          setApiError(true)
+          return
+        }
         const found = (data.articles || []).find((a: Article) => {
           const slug = a.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
           return slug === params.slug
         })
         setArticle(found || null)
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        setApiError(true)
+      })
       .finally(() => setLoading(false))
   }, [params.slug])
 
@@ -38,6 +50,16 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
     return (
       <div className="container mx-auto px-4 py-8">
         <p className="text-muted-foreground">Carregando artigo...</p>
+      </div>
+    )
+  }
+
+  if (apiError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center text-sm text-red-700">
+          Erro ao carregar notícias. Verifique se a NEWSAPI_KEY está configurada na Vercel.
+        </div>
       </div>
     )
   }

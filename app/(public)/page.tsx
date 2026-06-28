@@ -61,18 +61,27 @@ const secoes = ["Todas", "Política", "Cultura", "Carnaval", "Esportes", "Gastro
 export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [mounted, setMounted] = useState(false)
+  const [apiError, setApiError] = useState(false)
   const [secaoAtiva, setSecaoAtiva] = useState("Todas")
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
     const query = secaoAtiva === "Todas" ? "Bahia" : `${secaoAtiva} Bahia`
+    setApiError(false)
     fetch(`/api/news?q=${encodeURIComponent(query)}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then((data) => {
         setArticles(data.articles || [])
+        if (!data.articles) setApiError(true)
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        setApiError(true)
+      })
   }, [secaoAtiva])
 
   useEffect(() => {
@@ -100,6 +109,7 @@ export default function HomePage() {
   const destaques = articles.slice(4, 7)
   const opinioes = articles.slice(7, 10)
   const heroDate = mounted ? fmt(new Date()) : ""
+  const empty = !apiError && mounted && articles.length === 0
 
   return (
     <div ref={rootRef}>
@@ -121,6 +131,20 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {apiError && (
+        <div className="mx-auto max-w-7xl px-4 pt-6">
+          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center text-sm text-red-700">
+            Não foi possível carregar as notícias. Verifique se a chave NEWSAPI_KEY está configurada nas variáveis de ambiente da Vercel.
+          </div>
+        </div>
+      )}
+
+      {empty && (
+        <div className="mx-auto max-w-7xl px-4 pt-10 text-center text-muted-foreground">
+          <p>Nenhuma notícia encontrada para esta seção.</p>
+        </div>
+      )}
 
       <div key={secaoAtiva} className="animate-fade-slide">
       {/* HERO + SIDEBAR */}

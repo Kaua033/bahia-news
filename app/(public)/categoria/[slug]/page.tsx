@@ -18,14 +18,23 @@ const FALLBACK_IMG = "https://media.base44.com/images/public/6a3e9f3196fa26d5be6
 export default function CategoryPage({ params }: { params: { slug: string } }) {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState(false)
 
   useEffect(() => {
+    setApiError(false)
     fetch(`/api/news?q=${encodeURIComponent(`${params.slug} Bahia`)}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        return res.json()
+      })
       .then((data) => {
         setArticles(data.articles || [])
+        if (!data.articles) setApiError(true)
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        setApiError(true)
+      })
       .finally(() => setLoading(false))
   }, [params.slug])
 
@@ -35,7 +44,13 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
 
       {loading && <p className="text-muted-foreground">Carregando notícias...</p>}
 
-      {!loading && articles.length === 0 && (
+      {apiError && (
+        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-center text-sm text-red-700">
+          Erro ao carregar notícias. Verifique se a NEWSAPI_KEY está configurada na Vercel.
+        </div>
+      )}
+
+      {!loading && !apiError && articles.length === 0 && (
         <p className="text-muted-foreground">Nenhuma notícia encontrada.</p>
       )}
 
