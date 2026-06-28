@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState } from "react"
 
 interface Article {
@@ -54,11 +55,15 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
     <div className="container mx-auto px-4 py-8">
       <article className="mx-auto max-w-3xl">
         {article.urlToImage && (
-          <div className="mb-6 overflow-hidden rounded-lg">
-            <img
+          <div className="relative mb-6 overflow-hidden rounded-lg">
+            <Image
               src={article.urlToImage || FALLBACK_IMG}
               alt={article.title}
+              width={1200}
+              height={675}
+              unoptimized
               className="w-full object-cover"
+              sizes="(max-width: 768px) 100vw, 768px"
             />
           </div>
         )}

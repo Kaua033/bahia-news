@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState } from "react"
 
 interface Article {
@@ -43,11 +44,14 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
           <a key={article.url} href={article.url} target="_blank" rel="noopener noreferrer">
             <article className="group cursor-pointer border-t-2 border-foreground pt-5">
               <div className="relative mb-4 overflow-hidden">
-                <div className="aspect-[4/3]">
-                  <img
+                <div className="relative aspect-[4/3]">
+                  <Image
                     src={article.urlToImage || FALLBACK_IMG}
                     alt={article.title}
-                    className="size-full object-cover transition-transform duration-600 group-hover:scale-105"
+                    fill
+                    unoptimized
+                    className="object-cover transition-transform duration-600 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
               </div>

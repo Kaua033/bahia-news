@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 
 const FALLBACK_IMG = "https://media.base44.com/images/public/6a3e9f3196fa26d5be60d39c/63c5948a8_generated_778f393e.png"
@@ -127,11 +128,14 @@ export default function HomePage() {
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
           <article className="fade-on-scroll">
             <div className="relative overflow-hidden border-b-[3px] border-accent">
-              <div className="aspect-[16/9]">
-                <img
+              <div className="relative aspect-[16/9]">
+                <Image
                   src={hero?.urlToImage || FALLBACK_IMG}
                   alt={hero?.title || "Farol da Barra ao entardecer em Salvador, Bahia"}
-                  className="size-full object-cover transition-transform duration-600 hover:scale-105"
+                  fill
+                  unoptimized
+                  className="object-cover transition-transform duration-600 hover:scale-105"
+                  sizes="(max-width: 1024px) 100vw, 66vw"
                 />
               </div>
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/65 to-transparent" />
@@ -218,11 +222,14 @@ export default function HomePage() {
             <a key={card.url} href={card.url} target="_blank" rel="noopener noreferrer">
               <article className="fade-on-scroll group cursor-pointer border-t-2 border-foreground pt-5">
                 <div className="relative mb-4 overflow-hidden">
-                  <div className="aspect-[4/3]">
-                    <img
+                  <div className="relative aspect-[4/3]">
+                    <Image
                       src={card.urlToImage || cardImages[i] || FALLBACK_IMG}
                       alt={card.title}
-                      className="size-full object-cover transition-transform duration-600 group-hover:scale-105"
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-600 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   </div>
                 </div>

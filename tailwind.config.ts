@@ -19,9 +19,9 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        display: ["Playfair Display", "serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        display: ["var(--font-playfair-display)", "serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

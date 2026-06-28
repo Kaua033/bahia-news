@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 
 interface ArticleCardProps {
@@ -21,11 +22,13 @@ export function ArticleCard({
     <Link href={`/artigo/${slug}`} className="group block">
       <article className="overflow-hidden rounded-lg border bg-white shadow-sm transition-shadow hover:shadow-md">
         {coverImage && (
-          <div className="aspect-video overflow-hidden bg-gray-100">
-            <img
+          <div className="relative aspect-video overflow-hidden bg-gray-100">
+            <Image
               src={coverImage}
               alt={title}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           </div>
         )}
