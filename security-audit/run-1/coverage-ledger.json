@@ -1,0 +1,2024 @@
+[
+  {
+    "coverage_id": "app%2F%28admin%29%2Fadmin%23content-management%20stubs::lib%2Fauth-helpers.ts%23requireAuth::app%2Fadmin::ATTACK-CLASSES.md%23Wildcard",
+    "canonical_refs": {
+      "surface": "app/(admin)/admin#content-management stubs",
+      "boundary": "lib/auth-helpers.ts#requireAuth",
+      "subsystem": "app/admin",
+      "attack_class": "ATTACK-CLASSES.md#Wildcard"
+    },
+    "surface": "app/(admin)/admin#content-management stubs",
+    "boundary": "lib/auth-helpers.ts#requireAuth",
+    "subsystem": "app/admin",
+    "attack_class": "ATTACK-CLASSES.md#Wildcard",
+    "starting_paths": [
+      "app/(admin)/admin/page.tsx",
+      "app/(admin)/admin/artigos/page.tsx",
+      "app/(admin)/admin/artigos/novo/page.tsx",
+      "app/(admin)/admin/categorias/page.tsx",
+      "app/(admin)/admin/configuracoes/page.tsx",
+      "components/admin/editor.tsx",
+      "lib/sanitize.ts",
+      "lib/security-log.ts",
+      "lib/validations.ts",
+      ".gitignore"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Wildcard",
+    "selected_companion_blocks": [
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+        "reason": "no live HTTP write surface exists in this commit; the unit audits unwired controls and their wiring risk"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-d2",
+    "reviewed_paths": [
+      ".env.example",
+      ".gitignore",
+      "app/(admin)/admin/artigos/novo/page.tsx",
+      "app/(admin)/admin/artigos/page.tsx",
+      "app/(admin)/admin/categorias/page.tsx",
+      "app/(admin)/admin/configuracoes/page.tsx",
+      "components/admin/editor.tsx",
+      "lib/auth-helpers.ts",
+      "lib/sanitize.ts",
+      "lib/security-log.ts",
+      "lib/validations.ts",
+      "prisma/schema.prisma"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "components/admin/editor.tsx",
+          "lib/sanitize.ts"
+        ],
+        "invariant": "Any article HTML that reaches persistence from the TipTap editor must pass the repo's Microsoft sanitizer first; sink existence is verified, not assumed.",
+        "method": "source",
+        "artifact": null,
+        "result": "Latent wiring hazard, no current sink: editor.tsx:23-25 emits editor.getHTML() raw into onChange, and sanitizeHtml/sanitizePlainText (lib/sanitize.ts:15,24 — DOMPurify+JSDOM allowlist) have zero import sites repo-wide (grep: definitions only). At this commit there is no HTML consumer anywhere in tracked .ts/.tsx (repo-wide grep for dangerouslySetInnerHTML/innerHTML/.html(): 0 matches; the public article page renders article.content as a React text node), so no XSS path is exercisable today — recorded as hardening, not a candidate. If a write path is ever wired editor→articleSchema.content→DB→rendered HTML, the sanitizer must be inserted at the write boundary or the invariant fails again."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "lib/validations.ts"
+        ],
+        "invariant": "articleSchema and categorySchema must run at the article/category write boundary; coverImage must be scheme/origin-constrained before storage.",
+        "method": "source",
+        "artifact": null,
+        "result": "articleSchema (validations.ts:21-44: content ≤100k, ≤10 tags, coverImage z.string().url()) and categorySchema (:46-55) have zero import sites (grep: only loginSchema→lib/auth.ts:6 and newsQuerySchema→app/api/news/route.ts:4, peer-owned consumers). coverImage accepts any URL-passing string with no https/origin/scheme allowlist; zod locked 3.25.76 (package-lock.json:9633-9637), its URL parser behavior is library-internal — decisive behavior is blocker-marked, and with zero call sites it cannot affect any principal at this commit (hardening with explicit wiring condition). slug regex allowlist sane."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "lib/auth-helpers.ts",
+          "app/(admin)/admin/artigos/page.tsx",
+          "app/(admin)/admin/artigos/novo/page.tsx",
+          "app/(admin)/admin/categorias/page.tsx",
+          "app/(admin)/admin/configuracoes/page.tsx"
+        ],
+        "invariant": "requireAuth(minRole) and isAdmin must gate every server-side /admin content-management sink; the four content stub pages must contain no unguarded fetch/submit.",
+        "method": "source",
+        "artifact": null,
+        "result": "requireAuth/isAdmin/getSessionUser have zero call sites outside their definitions (grep across all .ts*) — RBAC helpers implemented (65f954e) never wired. Semantics while dead: requireAuth only red-badges minRole===\"ADMIN\" (auth-helpers.ts:25-33) — requireAuth(\"EDITOR\") behaves identically to requireAuth(undefined). All four admin content pages plus /admin are static server-component stubs with no data fetch, no form, no client JS — no route to same state change under a weaker check at this commit."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "prisma/schema.prisma"
+        ],
+        "invariant": "Prisma write paths (article publish, comment approval) exist only in an authorized boundary; lifecycle predicates cannot be flipped by any route.",
+        "method": "source",
+        "artifact": null,
+        "result": "Grep for prisma.<model>.create/update/delete/upsert/*Many across all .ts*: only prisma/seed.ts:17 (user.create) and :39 (category.upsert) — peer-owned seed unit; zero application write paths. Comment.isApproved @default(false) (schema.prisma:131) safe-by-default but no approval route exists; Article.status/authorId noted; relationMode=prisma (:9) cite-only."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "lib/security-log.ts"
+        ],
+        "invariant": "Security-relevant identity/authorization transitions must land in the structured security log with the declared 10 event types wired.",
+        "method": "source",
+        "artifact": null,
+        "result": "logSecurityEvent exports 10 event types (security-log.ts:1-34) and has zero call sites; actual logging is inline raw console strings in the peer-owned credential flow (lib/auth.ts:83,89,96,113,118). No persistence/retention/consumer: an operator cannot query a single security event today. Not a finding at this commit — hardening."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          ".env.example"
+        ],
+        "invariant": "Git history must contain no committed-then-removed secrets and no reverted security fix.",
+        "method": "source",
+        "artifact": null,
+        "result": "Read-only git log/show/rev-list over all refs (14 commits, 5d964c9..4337dfb): the only secret-bearing filename ever tracked is .env.example (added 5d964c9, removed 84bc710, one modification at 5ce90cd) — `git show 5ce90cd:.env.example` contains placeholder-only values; no sk-*/key/credential pattern matches any committed blob outside package-lock resolved URLs. No .env/*.pem/task.md/skills/ ever committed. No reverted security fix: middleware.ts diff 5d964c9→65f954e shows the token-presence-only callback unchanged, callbackUrl echo and /api/admin 401 branch added at 65f954e and still present; admin pages static stubs from first commit."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          ".gitignore"
+        ],
+        "invariant": ".gitignore must cover every convention-based secret file the stack loads before it is ever committed.",
+        "method": "source",
+        "artifact": null,
+        "result": ".gitignore ignores .env, .env*.local (:27), *.pem (:18), .env.example (:44) — but NOT `.env.*` in general: a convention-loaded .env.production / .env.development matches no rule and could be committed silently. Verified non-issue at this commit: git ls-files for *.env*/task.md/skills/*.pem empty; history-grep no secret blobs. Hardening pattern-fix only."
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "bookkeeping": {
+      "reassignment_note": "hunter-d returned no structured result within its assignment (result absent); units returned to planned and reassigned to a fresh owner (hunter-d2), wave 1, no archived attempt (no terminal evidence was produced).",
+      "hardening_notes": [
+        "Latent stored-XSS wiring hazard (no sink today): run sanitizeHtml on editor output at the future write boundary; keep CSP script-src 'unsafe-inline' acknowledged as regression hazard for the future render path.",
+        "articleSchema.coverImage z.string().url() with no scheme allowlist — smallest fix a .refine on protocol==='https:' before the schema is ever wired.",
+        ".gitignore: broaden to `.env*` keeping explicit .env.example exclusion (template file now also ignored after 84bc710)"
+      ],
+      "git_history_scope": "read-only git log/show/rev-list performed for the Wildcard class per prompt; no refs modified"
+    }
+  },
+  {
+    "coverage_id": "app%2F%28public%29%2Fartigo%2F%5Bslug%5D%2Fpage.tsx%23third-party%20article%20rendering::next.config.js%23Content-Security-Policy::app%2Fpublic-pages::ATTACK-CLASSES.md%23Chained%20vulnerabilities%20and%20trust%20boundaries",
+    "canonical_refs": {
+      "surface": "app/(public)/artigo/[slug]/page.tsx#third-party article rendering",
+      "boundary": "next.config.js#Content-Security-Policy",
+      "subsystem": "app/public-pages",
+      "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries"
+    },
+    "surface": "app/(public)/artigo/[slug]/page.tsx#third-party article rendering",
+    "boundary": "next.config.js#Content-Security-Policy",
+    "subsystem": "app/public-pages",
+    "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "starting_paths": [
+      "app/api/news/route.ts",
+      "app/(public)/page.tsx",
+      "app/(public)/artigo/[slug]/page.tsx",
+      "app/(public)/categoria/[slug]/page.tsx"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#DOM and object-state attack classes",
+      "CLIENT-SIDE.md#UI-redress and navigation attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules",
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+        "reason": "no shared-resource work bound; the unit reviews rendering trust, not availability"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "app/(public)/artigo/[slug]/page.tsx",
+      "app/(public)/categoria/[slug]/page.tsx",
+      "app/(public)/page.tsx",
+      "app/api/news/route.ts",
+      "next.config.js",
+      "lib/validations.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "server /api/news must bind a destination-policy/scheme allowlist on third-party-controlled article.url and urlToImage before serving them to browsers",
+        "method": "local",
+        "artifact": "agents/hunter-b/artifacts/observed-feed-passthrough.txt",
+        "result": "route.ts:65 res.json() applies no response schema; :67-73 the ONLY mutation is filter(title && !title.includes('[Removed]')) + slice(0,12); a fixture article with url:'javascript:alert(document.domain)' and urlToImage:'https://media.attacker.invalid/track-beacon.png' is served verbatim by :75-81 (PASS-CHECKs true; '[Removed]' item correctly excluded). route.ts itself cannot be imported in sandbox (next/server+zod, no node_modules) — harness replicates the exact :67-73 expression."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/(public)/artigo/[slug]/page.tsx",
+          "app/(public)/page.tsx",
+          "app/(public)/categoria/[slug]/page.tsx"
+        ],
+        "invariant": "third-party-controlled article.url must receive scheme/destination validation before binding to an anchor href sink",
+        "method": "source",
+        "artifact": null,
+        "result": "Six raw anchors bind href={article.url} with no scheme policy anywhere between pass-through and sink: artigo page:104, page.tsx:169/202/246/285, categoria:59 — each target=\"_blank\" rel=\"noopener noreferrer\" (reverse-tabnabbing blocked by rel, source-visible). No dangerouslySetInnerHTML/window.open/location flows in public pages (variant sweep)."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "next.config.js"
+        ],
+        "invariant": "CSP backstop blocking executable javascript: navigation for the href sink",
+        "method": "local",
+        "artifact": "agents/hunter-b/artifacts/observed-csp-header.txt",
+        "result": "Sandbox boot of next.config.js headers() shows the exact emitted header for source \"/(.*)\": script-src 'self' 'unsafe-eval' 'unsafe-inline' (no nonce/hash) — per CSP3/HTML the script-src inline-script check passes, so a javascript: href is NOT blocked; img-src 'self' https: data: blob: permits any https host (adequate as image-load baseline). Spec-derived, not browser-observed — flagged needs_validation in the candidate."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/(public)/page.tsx",
+          "app/(public)/artigo/[slug]/page.tsx",
+          "app/(public)/categoria/[slug]/page.tsx",
+          "next.config.js"
+        ],
+        "invariant": "urlToImage reached by <Image unoptimized> must be constrained before browser load",
+        "method": "source",
+        "artifact": null,
+        "result": "Raw binding: page.tsx:157/251, artigo:82, categoria:64 with unoptimized — any upstream-supplied https (or data:/blob:) host loads in every visitor's browser; img-src permits by design. Arbitrary-host image load = victim-IP/deanonymization exposure; by-design third-party media hosting for a feed aggregator — hardening, not candidate."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/(public)/artigo/[slug]/page.tsx"
+        ],
+        "invariant": "artigo slug matching must resolve a unique article deterministically without confused-deputy selection",
+        "method": "local",
+        "artifact": "agents/hunter-b/artifacts/observed-slug-match.txt",
+        "result": "page.tsx:37 slug derivation drops all non-ASCII-alnum runs: accented/punctuation-differing titles collide to identical slugs; find() at :36-39 serves the first feed item — content-selection confusion within one trust tier (anonymous read-only page). Not a security invariant failure → hardening note."
+      },
+      {
+        "agent_id": "verifier-c",
+        "reviewed_paths": [
+          "app/(public)/artigo/[slug]/page.tsx",
+          "app/(public)/page.tsx",
+          "app/api/news/route.ts",
+          "lib/validations.ts",
+          "next.config.js"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'newsapi-articles-url-unvalidated-scheme-href-sink': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-c/artifacts/observed-verifier-c-passthrough.txt",
+        "result": "Independent verdict: NEEDS_VALIDATION — feed article.url passes unmutated to raw <a href> and the CSP offers no backstop; upstream-feed controllability and browser scheme handling remain the owner blockers. Decisive artifacts: agents/verifier-c/artifacts/observed-verifier-c-passthrough.txt. Provenance: sandbox stdout was captured host-side into scratch because the approved bind set leaves scratch EROFS in-sandbox; promoted thereafter (attested in the record). Full final record in findings.json ('newsapi-articles-url-unvalidated-scheme-href-sink')."
+      }
+    ],
+    "result_fingerprints": [
+      "newsapi-articles-url-unvalidated-scheme-href-sink"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "rel=\"noopener noreferrer\" already present on all six anchors (reverse tabnabbing class closed).",
+        "CSP script-src 'unsafe-inline'/'unsafe-eval' is a hardening gap — prefer nonce/hash script-src.",
+        "img-src https: data: blob: plus raw unoptimized <Image> loads any feed-supplied host in visitor browsers (deanonymization) — allowlist urlToImage scheme/host.",
+        "artigo slug collisions (accents/punctuation) — derive/store a deterministic slug.",
+        "newsQuerySchema lacks .trim()/min(1) — empty/whitespace q passes server validation; recommend trim + min(1) + client cap mirror."
+      ],
+      "candidate_validation": {
+        "fingerprint": "newsapi-articles-url-unvalidated-scheme-href-sink",
+        "verifier": "verifier-c",
+        "decision": "needs_validation",
+        "session": "ses_e80b413b7ffevbejE2d9Et9njv",
+        "artifacts": [
+          "agents/verifier-c/artifacts/observed-verifier-c-passthrough.txt"
+        ],
+        "decision_summary": "feed article.url passes unmutated to raw <a href> and the CSP offers no backstop; upstream-feed controllability and browser scheme handling remain the owner blockers [sandbox stdout was captured host-side into scratch because the approved bind set leaves scratch EROFS in-sandbox; promoted thereafter (attested in the record).]"
+      },
+      "final_record_review": {
+        "verifier": "research-c",
+        "decision": "verified",
+        "session": "ses_e80a6f8f9ffejaGP0up3I5Hish",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2F%28public%29%2Fcategoria%2F%5Bslug%5D%2Fpage.tsx%23slug%20to%20query::lib%2Fvalidations.ts%23newsQuerySchema::app%2Fpublic-pages::ATTACK-CLASSES.md%23Injection",
+    "canonical_refs": {
+      "surface": "app/(public)/categoria/[slug]/page.tsx#slug to query",
+      "boundary": "lib/validations.ts#newsQuerySchema",
+      "subsystem": "app/public-pages",
+      "attack_class": "ATTACK-CLASSES.md#Injection"
+    },
+    "surface": "app/(public)/categoria/[slug]/page.tsx#slug to query",
+    "boundary": "lib/validations.ts#newsQuerySchema",
+    "subsystem": "app/public-pages",
+    "attack_class": "ATTACK-CLASSES.md#Injection",
+    "starting_paths": [
+      "app/(public)/categoria/[slug]/page.tsx",
+      "app/(public)/artigo/[slug]/page.tsx",
+      "lib/validations.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#UI-redress and navigation attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+        "reason": "server framing/cache interpretations are peer api-news units; this path is a client fetch"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-b",
+    "reviewed_paths": [
+      "app/(public)/artigo/[slug]/page.tsx",
+      "app/(public)/categoria/[slug]/page.tsx",
+      "app/api/news/route.ts",
+      "lib/validations.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/(public)/categoria/[slug]/page.tsx",
+          "app/(public)/artigo/[slug]/page.tsx"
+        ],
+        "invariant": "untrusted path segment params.slug must not escape the fixed query construction or reach any reflected/execution sink",
+        "method": "source",
+        "artifact": null,
+        "result": "categoria:25 fetch(`/api/news?q=${encodeURIComponent(`${params.slug} Bahia`)}`) — same-origin fixed endpoint; encodeURIComponent neutralizes '&','=','#','+' so no parameter smuggling; only other use of params.slug is a React text node at :43 (escape-neutral). Home fetch q constrained to fixed secoes array (page.tsx:59-72); artigo uses params.slug only for equality matching (:36-39)."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "lib/validations.ts",
+          "app/api/news/route.ts"
+        ],
+        "invariant": "boundary lib/validations.ts#newsQuerySchema: q length/shape-bounded server-side before upstream interpolation",
+        "method": "source",
+        "artifact": null,
+        "result": "newsQuerySchema q: z.string().max(100).default('Bahia') (validations.ts:57-62), consumed only by api/news/route.ts:31 with safeParse → 400 on violation (:32-37); q then encodeURIComponent'd (:50-52). Encoded ≤100 chars cannot alter URL structure. Gaps benign here: no .trim()/.min() so empty/whitespace-only q passes and proceeds upstream (hardening note)."
+      },
+      {
+        "agent_id": "hunter-b",
+        "reviewed_paths": [
+          "app/(public)/categoria/[slug]/page.tsx",
+          "app/api/news/route.ts"
+        ],
+        "invariant": "error/edge paths must render safely and not reflect untrusted input beyond escaped text",
+        "method": "source",
+        "artifact": null,
+        "result": "400 and upstream-5xx paths: res.ok check (categoria:27) → throw → catch(:34-37) → apiError banner (:47-51) fixed string; body never parsed on error; articles state only from data.articles || []. No reflected interpolation of params.slug or API error text in any non-text-node position."
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": []
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts%23NextAuth%20endpoints::lib%2Fauth.ts%23authorize%20credentials::app%2Fapi%2Fauth::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+      "boundary": "lib/auth.ts#authorize credentials",
+      "subsystem": "app/api/auth",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+    "boundary": "lib/auth.ts#authorize credentials",
+    "subsystem": "app/api/auth",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "app/api/auth/[...nextauth]/route.ts",
+      "lib/auth.ts",
+      "lib/rate-limit.ts",
+      "lib/validations.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Browser-session attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "CLIENT-SIDE.md#Core discipline",
+        "reason": "credentials POST is a server-side boundary; no browser-only storage/message source exists"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-c",
+    "reviewed_paths": [
+      "Dockerfile",
+      "app/(admin)/admin/login/page.tsx",
+      "app/api/auth/[...nextauth]/route.ts",
+      "app/api/news/route.ts",
+      "docker-compose.yml",
+      "lib/auth.ts",
+      "lib/rate-limit.ts",
+      "lib/validations.ts",
+      "middleware.ts",
+      "package.json"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "lib/validations.ts",
+          "app/api/auth/[...nextauth]/route.ts"
+        ],
+        "invariant": "credentials failure-path state machine must reach its own declared lock threshold (MAX_LOGIN_ATTEMPTS=5) before isLockedOut can ever return true",
+        "method": "source",
+        "artifact": null,
+        "result": "Branch order at lib/auth.ts:78-127: checkRateLimit -> loginSchema.safeParse -> isLockedOut(email) -> prisma.user.findUnique -> !user||!passwordHash||!isActive -> bcrypt.compare -> recordFailedAttempt/clearAttempts. recordFailedAttempt (lib/auth.ts:34-41) initializes entries {count:0, lockedUntil:0} (lib/auth.ts:35) and only sets lockedUntil when count>=MAX_LOGIN_ATTEMPTS; isLockedOut (lib/auth.ts:24-32) deletes any entry whose lockedUntil is in the past — lockedUntil=0 is always in the past, so the sentinel entry left by every sub-threshold failure is wiped by the next authorize(): the count never exceeds 1 and the lock can never engage through the credentials flow; the 'Account locked' warn at lib/auth.ts:96 is unreachable; wrong-password budget for a registered email is governed by nothing but the XFF-keyed 10/min per-IP limiter. [NOTE: the hunter's claimed sandbox replication of this state machine had no promotable artifact; treat the local-replication claim as unverified pending the verifier's independent re-run.]"
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/rate-limit.ts",
+          "lib/auth.ts",
+          "app/api/news/route.ts",
+          "docker-compose.yml"
+        ],
+        "invariant": "per-IP 10/min login and news accounting key must be derived from a request attribute the caller cannot pick",
+        "method": "source",
+        "artifact": null,
+        "result": "lib/auth.ts:16-22 uses the FIRST x-forwarded-for segment (fallback 'unknown' shared bucket); lib/rate-limit.ts keys entries on that caller-supplied string with no trusted-proxy decision anywhere in source; docker-compose.yml:24-25 publishes the app directly on 3000:3000 with no proxy in the stack, and the sibling consumer app/api/news/route.ts:11 keys the same limiter on the RAW header value, so identical headers partition into different accounting tables sharing the same 10/min ceiling; whether XFF is attacker-controlled on the deployed edge is not repo-visible."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "app/(admin)/admin/login/page.tsx",
+          "app/api/auth/[...nextauth]/route.ts",
+          "package.json"
+        ],
+        "invariant": "ambient-credential write endpoints (login/signout) must reject cross-site posts via a same-principal binding",
+        "method": "source",
+        "artifact": null,
+        "result": "Repository exposes NextAuth REST-only: route.ts mounts the whole /api/auth catch-all; no form, no client signIn call exists anywhere (grep repo-wide; login page is a static stub); the double-submit csrfToken/hash flow that would reject a forged ambient POST lives inside next-auth@4.24.7 (pinned in package.json/package-lock.json) whose internals are not in this checkout (node_modules absent)."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "middleware.ts",
+          "Dockerfile",
+          "docker-compose.yml"
+        ],
+        "invariant": "session cookie transport flags and token rotation on login must isolate principals",
+        "method": "source",
+        "artifact": null,
+        "result": "sessionToken cookie: httpOnly, sameSite=lax, path=/, secure iff NODE_ENV==='production' (lib/auth.ts:57-66); Docker image sets NODE_ENV=production at build AND runtime (Dockerfile:15-16/24-25) so the non-secure variant only serves non-container dev runs; no code path rotates or revokes issued tokens — cookie flags otherwise sane defaults, no-rotation recorded under T8."
+      },
+      {
+        "agent_id": "verifier-d",
+        "reviewed_paths": [
+          "app/api/auth/[...nextauth]/route.ts",
+          "lib/auth.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'lib/auth.ts:24-39.lockout-sentinel-counter-collision': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-d/artifacts/observed-lockout-state-machine-run.txt",
+        "result": "Independent verdict: CONFIRMED — the 5-failure lockout cannot engage: isLockedOut deletes the {count:0, lockedUntil:0} sentinel before the counter accumulates (reproduced in an own verbatim-extracted state-machine fixture). Decisive artifacts: agents/verifier-d/artifacts/observed-lockout-state-machine.mjs; agents/verifier-d/artifacts/observed-lockout-state-machine-run.txt. Full final record in findings.json ('lib/auth.ts:24-39.lockout-sentinel-counter-collision')."
+      }
+    ],
+    "result_fingerprints": [
+      "lib/auth.ts:24-39.lockout-sentinel-counter-collision"
+    ],
+    "unresolved": [
+      "hunter-c's reported local fixture artifacts (observed-t6-state-machine.mjs, observed-t6-lockout.mjs, observed-t6-run-attempt.txt) were absent from agents/hunter-c/scratch — promotion impossible; the lockout state-machine replication must be independently re-run by the Phase 3 verifier."
+    ],
+    "bookkeeping": {
+      "hardening_notes": [
+        "No client signIn() call exists; once a login form is wired, use the library CSRF flow and consider sameSite:'strict' for the admin cookie.",
+        "Cookie: secure only when NODE_ENV==='production' (lib/auth.ts:64) — prod images set it; dev-only gap.",
+        "bcryptjs drops bytes beyond 72 while loginSchema accepts 128 — cap at 72 or pre-hash.",
+        "Auth logs contain emails/IPs ([SECURITY] lines) — PII in logs, no secrets.",
+        "Prisma query logging (lib/prisma.ts:11) dev-only; prod sets NODE_ENV=production.",
+        "PrismaAdapter attached with jwt strategy — Account/Session/VerificationToken rows are dead surface.",
+        "NEXTAUTH_SECRET absent → NextAuth v4 fails closed at signing (availability posture); not bound in repo."
+      ],
+      "duplicate_fingerprints": [
+        "lib/rate-limit.ts:6-22.attack-controlled-xff-key = same root cause family as lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map (peer unit T1 carries the consolidated candidate)"
+      ],
+      "candidate_validation": {
+        "fingerprint": "lib/auth.ts:24-39.lockout-sentinel-counter-collision",
+        "verifier": "verifier-d",
+        "decision": "confirmed",
+        "session": "ses_e80b4138effeOiwkEsu9WAR8gs",
+        "artifacts": [
+          "agents/verifier-d/artifacts/observed-lockout-state-machine.mjs",
+          "agents/verifier-d/artifacts/observed-lockout-state-machine-run.txt"
+        ],
+        "decision_summary": "the 5-failure lockout cannot engage: isLockedOut deletes the {count:0, lockedUntil:0} sentinel before the counter accumulates (reproduced in an own verbatim-extracted state-machine fixture)"
+      },
+      "final_record_review": {
+        "verifier": "research-d",
+        "decision": "verified",
+        "session": "ses_e80a6f8c1ffeTFH6bGoKDfcnjg",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts%23NextAuth%20endpoints::lib%2Fauth.ts%23authorize%20credentials::app%2Fapi%2Fauth::ATTACK-CLASSES.md%23Cryptography%20and%20secrets",
+    "canonical_refs": {
+      "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+      "boundary": "lib/auth.ts#authorize credentials",
+      "subsystem": "app/api/auth",
+      "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets"
+    },
+    "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+    "boundary": "lib/auth.ts#authorize credentials",
+    "subsystem": "app/api/auth",
+    "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "starting_paths": [
+      "lib/auth.ts",
+      "lib/prisma.ts",
+      "lib/validations.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#API-key exposure and unsafe transport",
+        "reason": "NEWSAPI_KEY transport is owned by the peer api-news upstream-fetch unit"
+      },
+      {
+        "block": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+        "reason": "quota accounting owned by peer units; this unit reviews crypto/secrets handling only"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-c",
+    "reviewed_paths": [
+      "lib/auth.ts",
+      "lib/prisma.ts",
+      "lib/validations.ts",
+      "prisma/seed.ts",
+      "app/api/auth/[...nextauth]/route.ts",
+      "middleware.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "prisma/seed.ts",
+          "lib/validations.ts"
+        ],
+        "invariant": "failed-login responses must not be distinguishable by wall-clock latency per email",
+        "method": "source",
+        "artifact": null,
+        "result": "unknown email / passwordHash-null / !isActive rows short-circuit at lib/auth.ts:104-107 WITHOUT any bcrypt work; existing rows reach bcrypt.compare (lib/auth.ts:109) at cost 12 (prisma/seed.ts:15); both branches return null so the asymmetry is only observable as timing; nothing in source equalizes the paths (no dummy hash, no delay)."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/validations.ts",
+          "prisma/seed.ts",
+          "lib/auth.ts"
+        ],
+        "invariant": "password hashing cost contemporary; no silent entropy loss the caller submitted",
+        "method": "source",
+        "artifact": null,
+        "result": "cost 12 at seed and one compare site (no truncation wrap, no pre-hash); bcryptjs discards bytes past 72 while loginSchema accepts up to 128 (lib/validations.ts:12) — postures acceptable for a two-role staff portal (hardening)."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "lib/prisma.ts"
+        ],
+        "invariant": "no secret material reachable from the credentials path is logged; PII minimal",
+        "method": "source",
+        "artifact": null,
+        "result": "logs emit email and annotated IP only (lib/auth.ts:83/89/96/113/118) — no password hashes, no NEXTAUTH_SECRET (docker-compose env name only, line 29); prisma query logging gated on NODE_ENV==='development' (lib/prisma.ts:11) and shipped prod image sets NODE_ENV=production (Dockerfile:15-16/24-25)."
+      },
+      {
+        "agent_id": "verifier-e",
+        "reviewed_paths": [
+          "app/api/auth/[...nextauth]/route.ts",
+          "lib/auth.ts",
+          "middleware.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'lib/auth.ts:104-109.findunique-before-bcrypt-timing-asymmetry': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-e/artifacts/observed-branch-divergence.json",
+        "result": "Independent verdict: NEEDS_VALIDATION — the branch asymmetry is source-visible (0 crypto ops on early-exit legs vs cost-12 compare); the real latency differential through next-auth remains the owner blocker. Decisive artifacts: agents/verifier-e/artifacts/observed-branch-divergence.json; agents/verifier-e/artifacts/observed-branch-divergence.mjs. Full final record in findings.json ('lib/auth.ts:104-109.findunique-before-bcrypt-timing-asymmetry')."
+      }
+    ],
+    "result_fingerprints": [
+      "lib/auth.ts:104-109.findunique-before-bcrypt-timing-asymmetry"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [],
+      "candidate_validation": {
+        "fingerprint": "lib/auth.ts:104-109.findunique-before-bcrypt-timing-asymmetry",
+        "verifier": "verifier-e",
+        "decision": "needs_validation",
+        "session": "ses_e80b4138dffe3zTRab44m0oXVe",
+        "artifacts": [
+          "agents/verifier-e/artifacts/observed-branch-divergence.json",
+          "agents/verifier-e/artifacts/observed-branch-divergence.mjs"
+        ],
+        "decision_summary": "the branch asymmetry is source-visible (0 crypto ops on early-exit legs vs cost-12 compare); the real latency differential through next-auth remains the owner blocker"
+      },
+      "final_record_review": {
+        "verifier": "research-e",
+        "decision": "verified",
+        "session": "ses_e80a6f8c0ffeaXt0Zt1I7a44Zz",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts%23NextAuth%20endpoints::lib%2Fauth.ts%23jwt%20and%20session%20callbacks::app%2Fapi%2Fauth::ATTACK-CLASSES.md%23Access%20control::lib%2Fauth.ts%23isActive%20gate%20at%20authorize",
+    "canonical_refs": {
+      "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+      "boundary": "lib/auth.ts#jwt and session callbacks",
+      "subsystem": "app/api/auth",
+      "attack_class": "ATTACK-CLASSES.md#Access control",
+      "lifecycle": "lib/auth.ts#isActive gate at authorize"
+    },
+    "surface": "app/api/auth/[...nextauth]/route.ts#NextAuth endpoints",
+    "boundary": "lib/auth.ts#jwt and session callbacks",
+    "subsystem": "app/api/auth",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "lifecycle": "account-disable-staleness",
+    "starting_paths": [
+      "lib/auth.ts",
+      "middleware.ts",
+      "types/index.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#JWT verification and claim binding",
+      "WEB-PROTOCOL-AND-AUTH.md#Session fixation and invalidation",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Deletion, revocation, and lifecycle attack classes",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Universal moves",
+      "DATA-ISOLATION-AND-LIFECYCLE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "CLIENT-SIDE.md#Core discipline",
+        "reason": "session token is an httpOnly cookie; no localStorage/message-worker storage path in source"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-c",
+    "reviewed_paths": [
+      "app/(admin)/admin/page.tsx",
+      "lib/auth.ts",
+      "prisma/schema.prisma",
+      "types/index.ts",
+      "app/api/auth/[...nextauth]/route.ts",
+      "lib/auth-helpers.ts",
+      "middleware.ts",
+      "package.json"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "types/index.ts",
+          "prisma/schema.prisma"
+        ],
+        "invariant": "revocation ledger (User.isActive / role) must bind every request that consumes authorization claims",
+        "method": "source",
+        "artifact": null,
+        "result": "authorize() returns {id, email, name, image, role} once (lib/auth.ts:120-126); jwt callback stamps token.id/role only on sign-in (lib/auth.ts:131-137); session callback projects token into session (lib/auth.ts:138-144) with no DB read anywhere after issuance; jwt+session maxAge both 3600s (lib/auth.ts:50-56); grep shows isActive read nowhere except the sign-in path (lib/auth.ts:104) and requireAuth has zero call sites; the one request-side gate (middleware.ts:36-44, peer) checks !!token presence only — an issued JWT authorizes for the full hour after isActive=false or role change with no compensating control."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "app/(admin)/admin/page.tsx"
+        ],
+        "invariant": "stale-claim behavior must not grant access to any privileged data surface",
+        "method": "source",
+        "artifact": null,
+        "result": "current impact boundary is only the static stub dashboard pages (no fetch/axios/swr/serverSideProps in the (admin) tree) — no privileged data leaks today; the invariant violation sits in the auth core so any future wired admin API inherits it; next-auth JWT/session behavior cannot execute locally (no node_modules)."
+      },
+      {
+        "agent_id": "hunter-c",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "prisma/schema.prisma"
+        ],
+        "invariant": "dormant credential records must not create an alternate authorization path",
+        "method": "source",
+        "artifact": null,
+        "result": "strategy is jwt (lib/auth.ts:51) while PrismaAdapter is attached (lib/auth.ts:49); Account/Session/VerificationToken tables exist but nothing reads them — no parallel path; User.role defaults to EDITOR (schema.prisma:19) — consistent single-tenant posture."
+      },
+      {
+        "agent_id": "verifier-f",
+        "reviewed_paths": [
+          "app/(admin)/admin/page.tsx",
+          "app/api/auth/[...nextauth]/route.ts",
+          "lib/auth-helpers.ts",
+          "lib/auth.ts",
+          "middleware.ts",
+          "package.json",
+          "prisma/schema.prisma"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'lib/auth.ts:130-145.jwt-claims-never-revalidated': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-f/artifacts/observed-claims-replay.json",
+        "result": "Independent verdict: NEEDS_VALIDATION — id/role claims are stamped only at sign-in and never re-derived post-issuance (structural replay); measured rejection latency after deactivation remains the owner blocker. Decisive artifacts: agents/verifier-f/artifacts/observed-claims-replay.json; agents/verifier-f/artifacts/observed-claims-replay.mjs; agents/verifier-f/artifacts/observed-provenance.txt. Provenance: in-sandbox scratch persistence failed with EROFS (tree is --ro-bind / /), so the replay result was persisted from observed stdout; provenance attested in agents/verifier-f/artifacts/observed-provenance.txt. Full final record in findings.json ('lib/auth.ts:130-145.jwt-claims-never-revalidated')."
+      }
+    ],
+    "result_fingerprints": [
+      "lib/auth.ts:130-145.jwt-claims-never-revalidated"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [],
+      "candidate_validation": {
+        "fingerprint": "lib/auth.ts:130-145.jwt-claims-never-revalidated",
+        "verifier": "verifier-f",
+        "decision": "needs_validation",
+        "session": "ses_e80b4138cffezNlEMz33EIdOfc",
+        "artifacts": [
+          "agents/verifier-f/artifacts/observed-claims-replay.json",
+          "agents/verifier-f/artifacts/observed-claims-replay.mjs",
+          "agents/verifier-f/artifacts/observed-provenance.txt"
+        ],
+        "decision_summary": "id/role claims are stamped only at sign-in and never re-derived post-issuance (structural replay); measured rejection latency after deactivation remains the owner blocker [in-sandbox scratch persistence failed with EROFS (tree is --ro-bind / /), so the replay result was persisted from observed stdout; provenance attested in agents/verifier-f/artifacts/observed-provenance.txt.]"
+      },
+      "final_record_review": {
+        "verifier": "research-f",
+        "decision": "verified",
+        "session": "ses_e80a6f8bfffeaNwlFRV1hRsHLA",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fnews%2Froute.ts%23GET%20%2Fapi%2Fnews::app%2Fapi%2Fnews%2Froute.ts%23upstream%20fetch%20to%20newsapi.org::app%2Fapi%2Fnews::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "app/api/news/route.ts#GET /api/news",
+      "boundary": "app/api/news/route.ts#upstream fetch to newsapi.org",
+      "subsystem": "app/api/news",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "app/api/news/route.ts#GET /api/news",
+    "boundary": "app/api/news/route.ts#upstream fetch to newsapi.org",
+    "subsystem": "app/api/news",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "app/api/news/route.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Pre-authentication work imbalance",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Retry storm and fail-open amplification",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+        "reason": "forwarded-header/identity trust is owned by the peer limiter unit on this same surface"
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "deployment overlay facts are separate units; this boundary is the in-process outbound fetch"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/api/news/route.ts",
+      "lib/rate-limit.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "An aggregate bound on operator-metered upstream spend exists somewhere in the layered controls of this path",
+        "method": "source",
+        "artifact": null,
+        "result": "Negative: the only repo-visible bound is the per-key 10/60s limiter (lib/rate-limit.ts:3-4) whose key is client-controllable (T1); repo-wide rg for checkRateLimit|resetRateLimit|rate-limit shows no other limiter, global counter, tenant quota, or auth gate on this route (unauthenticated; middleware matcher /admin*+api/admin* only). Each allowed request requires NEWSAPI_KEY (route.ts:41-46) then exactly one outbound billable call (route.ts:49-54)."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "The {next:{revalidate:300}} data cache demultiplexes attacker-varied q into bounded cache growth",
+        "method": "source",
+        "artifact": null,
+        "result": "Cache key basis includes the attacker-controlled q and the secret key — identical q within 300s is served from cache without an upstream hit (repo-visible mitigating facet), while each unique q mints a new first-fetch; per-instance storage and eviction of the Next data cache are framework internals not in the repository — T3 blockers."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "Upstream hangs and failures cannot amplify shared work",
+        "method": "source",
+        "artifact": null,
+        "result": "No AbortSignal/timeout on the fetch; each request awaits upstream completion holding its own worker turn — no repo-visible lever for a remote attacker to make newsapi.org hang (TLS-validated), so this is a hardening item. No retry/backoff; !res.ok → 500 once."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Bound-shape proof: intended per-key budget vs operator quota and aggregate-cap absence",
+        "method": "local",
+        "artifact": "agents/hunter-a/artifacts/observed-quota-velocity.json",
+        "result": "Intended budget from source constants 10 per 60s per key: at a sustained honest 10/min, Q units of plan quota drain in Q/6 minutes; with distinct attacker keys there is no aggregate cap at all (same harness as T1)."
+      },
+      {
+        "agent_id": "verifier-b",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'app/api/news/route.ts.pre-auth-upstream-spend.no-global-cap': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-b/artifacts/observed-no-additional-cap.json",
+        "result": "Independent verdict: NEEDS_VALIDATION — no aggregate/global cap is repo-visible; upstream spend metering rests on the external provider plan (owner blocker). Decisive artifacts: agents/verifier-b/artifacts/observed-no-additional-cap.json; agents/verifier-b/artifacts/observed-no-additional-cap.mjs. Full final record in findings.json ('app/api/news/route.ts.pre-auth-upstream-spend.no-global-cap')."
+      }
+    ],
+    "result_fingerprints": [
+      "app/api/news/route.ts.pre-auth-upstream-spend.no-global-cap"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [],
+      "candidate_validation": {
+        "fingerprint": "app/api/news/route.ts.pre-auth-upstream-spend.no-global-cap",
+        "verifier": "verifier-b",
+        "decision": "needs_validation",
+        "session": "ses_e80b413b9ffeGDDdZHIabkKsQ4",
+        "artifacts": [
+          "agents/verifier-b/artifacts/observed-no-additional-cap.json",
+          "agents/verifier-b/artifacts/observed-no-additional-cap.mjs"
+        ],
+        "decision_summary": "no aggregate/global cap is repo-visible; upstream spend metering rests on the external provider plan (owner blocker)"
+      },
+      "final_record_review": {
+        "verifier": "research-b",
+        "decision": "verified",
+        "session": "ses_e80a6f8fcffevteARtxGqH6eeW",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fnews%2Froute.ts%23GET%20%2Fapi%2Fnews::lib%2Frate-limit.ts%23checkRateLimit::app%2Fapi%2Fnews::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "app/api/news/route.ts#GET /api/news",
+      "boundary": "lib/rate-limit.ts#checkRateLimit",
+      "subsystem": "app/api/news",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "app/api/news/route.ts#GET /api/news",
+    "boundary": "lib/rate-limit.ts#checkRateLimit",
+    "subsystem": "app/api/news",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "app/api/news/route.ts",
+      "lib/rate-limit.ts",
+      "lib/auth.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules",
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Host and forwarded-header trust",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "CLIENT-SIDE.md#Core discipline",
+        "reason": "no browser-side trust decision on the limiter path; identity keying is server-side header parsing"
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "no tenant/lifecycle predicate exists at this boundary in source (single in-process Map)"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/api/news/route.ts",
+      "docker-compose.yml",
+      "lib/auth.ts",
+      "lib/rate-limit.ts",
+      "middleware.ts",
+      "next.config.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/rate-limit.ts",
+          "lib/auth.ts",
+          "middleware.ts",
+          "next.config.js"
+        ],
+        "invariant": "The limiter key is a client identity supplied/normalized by trusted ingress, and all consumers derive the same key from the same header",
+        "method": "source",
+        "artifact": null,
+        "result": "app/api/news/route.ts:11 keys the limiter on the raw header string x-forwarded-for ?? x-real-ip ?? 'unknown' — client-controllable byte-for-byte. No repo layer normalizes or strips it first: middleware.ts:49-51 matches only /admin/:path* and /api/admin/:path*; next.config.js:44-76 headers() only sets response headers; no custom server or instrumentation file exists in the repo. lib/auth.ts:16-22,81 parses the same header differently (split(',')[0].trim()) and shares the identical checkRateLimit Map — so one request value yields two different keys across the two surfaces, and the /api/auth per-IP budget is the same Map used by /api/news."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Per-key budget semantics: distinct keys get independent budgets; the default key 'unknown' is a single shared bucket; the two consumers key the same request value differently",
+        "method": "local",
+        "artifact": "agents/hunter-a/artifacts/observed-rate-limit-map.json",
+        "result": "Sandboxed import of lib/rate-limit.ts with a patched Date.now (env only PATH=/usr/bin:/bin, HOME=scratch; --as prlimit adjusted to 4 GiB because 1 GiB crashes Node v26 in V8 isolate init before any target code — recorded deviation; all other prlimit bounds per template). A: same key 11th call allowed=false remaining=0. B: 60 attacker-chosen distinct keys in one minute → 60/60 allowed (6x intended budget; N keys → N*10/window). C: one XFF value '1.2.3.4, 9.9.9.9' → route-style key (raw) and auth-style key (first segment trimmed) are two independent buckets, both fresh. D: one principal exhausts the shared 'unknown' bucket (all headerless clients 429'd for the 60s window; same key also gates login via lib/auth.ts:81)."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Limiter state cardinality is bounded and expired entries are evicted; reset paths exist and are used",
+        "method": "local",
+        "artifact": "agents/hunter-a/artifacts/observed-rate-limit-map.json",
+        "result": "200,000 unique attacker values inserted at ~47.3 MB rss delta; after advancing a fake clock +1h past every 60s window the entry for k100000 still exists and resets on touch (allowed=true, remaining=9) — retention with no size cap, no sweep, eviction only on same-key re-touch. resetRateLimit has zero call sites repo-wide. Count itself is uncapped though remaining floors at 0 (negative-underflow idea disproved)."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/rate-limit.ts",
+          "docker-compose.yml"
+        ],
+        "invariant": "Each allowed request maps to bounded shared spend; a preventing layer exists downstream or at ingress",
+        "method": "source",
+        "artifact": null,
+        "result": "Every allowed request (route.ts:14 gate passes) proceeds to an unauthenticated outbound fetch to newsapi.org carrying the operator NEWSAPI_KEY in the URL (route.ts:49-54, ~53 revalidate 300). With the key controllable by the request, aggregate upstream spend is unbounded by this perimeter. Lower-bounding reachable-mode condition: docker-compose.yml:24-25 publishes the app port directly (APP_PORT 3000 → 3000), i.e. a shipped mode where the Next server sees the client's header verbatim; behind a strictly normalizing ingress the per-key escape reverts to IP keying while the unbounded-map and 'unknown' shared-bucket facets remain."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "The [SECURITY]-log sink at route.ts:15 can only receive header-byte-safe identity text",
+        "method": "local",
+        "artifact": "agents/hunter-a/artifacts/observed-header-fixture.json",
+        "result": "Bounded unix-socket HTTP fixture (no external network) against the identical shape of route.ts:15's console.warn: benign single- and multi-segment XFF pass verbatim; every control-byte variant (raw LF, bare CR, ESC/ANSI, NUL) is rejected by Node's HTTP parser with 400 before the app — header-level log-content injection into the route.ts:15 sink is not achievable in this runtime; the deciding layer (llhttp) is runtime, not repo source."
+      },
+      {
+        "agent_id": "verifier-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "docker-compose.yml",
+          "lib/auth.ts",
+          "lib/rate-limit.ts",
+          "middleware.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-a/artifacts/observed-verifier-a-rate-limit.json",
+        "result": "Independent verdict: CONFIRMED — per-key envelopes escape via client-controlled XFF/x-real-ip keys and the module-global Map grows without cardinality cap or eviction (reproduced: 200k-key growth). Decisive artifacts: agents/verifier-a/artifacts/observed-verifier-a-rate-limit.json; agents/verifier-a/artifacts/observed-verifier-a-rate-limit.mjs. Provenance: target-controlled run inside the approved sandbox with one recorded addition -- a writable --bind of the scratch directory (the parent recipe's --ro-bind / / leaves scratch EROFS) -- plus --expose-gc; all other controls per template (empty env, loopback-only netns, prlimit caps, read-only tree). Full final record in findings.json ('lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map')."
+      }
+    ],
+    "result_fingerprints": [
+      "lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "app/api/news/route.ts:41-46 — when NEWSAPI_KEY is unset the 500 message names the env var; prefer generic 503.",
+        "app/api/news/route.ts:49-54 — upstream fetch has no AbortSignal/timeout; bound it.",
+        "app/api/news/route.ts:52 — NEWSAPI_KEY in URL joins the Next data-cache key; prefer header-based upstream auth.",
+        "app/api/news/route.ts:57-58 — console.error logs full upstream error body; sanitize before logging.",
+        "lib/rate-limit.ts:16 — entry.count++ continues on rejected requests without cap; cap at MAX_REQUESTS+1.",
+        "app/api/news/route.ts:15 — [SECURITY] log embeds the raw header string; quote/normalize fields."
+      ],
+      "sandbox_deviation_note": "hunter-a ran the required prlimit --as with 4 GiB (1 GiB crashes Node v26 V8 isolate init); all other caps per template. Verified by parent at consolidation.",
+      "candidate_validation": {
+        "fingerprint": "lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map",
+        "verifier": "verifier-a",
+        "decision": "confirmed",
+        "session": "ses_e80b413bbffeYeiNhNQZmfv7xS",
+        "artifacts": [
+          "agents/verifier-a/artifacts/observed-verifier-a-rate-limit.json",
+          "agents/verifier-a/artifacts/observed-verifier-a-rate-limit.mjs"
+        ],
+        "decision_summary": "per-key envelopes escape via client-controlled XFF/x-real-ip keys and the module-global Map grows without cardinality cap or eviction (reproduced: 200k-key growth) [target-controlled run inside the approved sandbox with one recorded addition -- a writable --bind of the scratch directory (the parent recipe's --ro-bind / / leaves scratch EROFS) -- plus --expose-gc; all other controls per template (empty env, loopback-only netns, prlimit caps, read-only tree).]"
+      },
+      "alias_consolidation": {
+        "alias": "lib/rate-limit.ts:6-22.attack-controlled-xff-key",
+        "origin": "hunter-c peer proposal on the same in-process Map (recorded in peer unit T6's tree bookkeeping as duplicate_fingerprints)",
+        "disposition": "same root cause (same Map, same client-controlled header-trust input); folded into the primary fingerprint lib/rate-limit.ts.checkRateLimit.attacker-keyed-unbounded-map — verifier-a's confirmed record carries the subsumption note in its description."
+      },
+      "final_record_review": {
+        "verifier": "research-a",
+        "decision": "verified",
+        "session": "ses_e80a6f8ffffeAQtIYSttqEgMww",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "app%2Fapi%2Fnews%2Froute.ts%23GET%20%2Fapi%2Fnews::lib%2Fvalidations.ts%23newsQuerySchema::app%2Fapi%2Fnews::ATTACK-CLASSES.md%23Injection",
+    "canonical_refs": {
+      "surface": "app/api/news/route.ts#GET /api/news",
+      "boundary": "lib/validations.ts#newsQuerySchema",
+      "subsystem": "app/api/news",
+      "attack_class": "ATTACK-CLASSES.md#Injection"
+    },
+    "surface": "app/api/news/route.ts#GET /api/news",
+    "boundary": "lib/validations.ts#newsQuerySchema",
+    "subsystem": "app/api/news",
+    "attack_class": "ATTACK-CLASSES.md#Injection",
+    "starting_paths": [
+      "app/api/news/route.ts",
+      "lib/validations.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Response-header injection",
+      "WEB-PROTOCOL-AND-AUTH.md#API-key exposure and unsafe transport",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+        "reason": "pre-auth proxy cost/amplification is owned by the peer api-news upstream-fetch unit"
+      },
+      {
+        "block": "CLIENT-SIDE.md#Core discipline",
+        "reason": "browser rendering of third-party JSON is owned by peer public-pages rendering unit"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-a",
+    "reviewed_paths": [
+      "app/api/news/route.ts",
+      "lib/rate-limit.ts",
+      "lib/validations.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/validations.ts"
+        ],
+        "invariant": "q cannot alter the structure of the outbound URL or escape the query component",
+        "method": "source",
+        "artifact": null,
+        "result": "route.ts:28-31 reads q once (searchParams.get, absent → undefined → schema default 'Bahia'), lib/validations.ts:57-62 caps it at 100 chars, and route.ts:50-51 wraps it in encodeURIComponent before the single interpolation into the fixed /everything?q=... URL — every remaining URL component is source-literal or env-sourced. Sad-path variants (empty string, 100 chars of encoding-multiplying glyphs, missing param) stay length/shape-bounded upstream."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/validations.ts"
+        ],
+        "invariant": "Control bytes / delimiters from the requester cannot reach the fetch URL or any downstream sink in an interpreted form",
+        "method": "local",
+        "artifact": "agents/hunter-a/artifacts/observed-header-fixture.json",
+        "result": "The q flows to the upstream URL in a request-line-conveyed component parsed by the same HTTP header-parse stage demonstrated in the fixture: benign values pass through verbatim; control-byte variants are rejected with 400 before the app sees them (LF/CR/ESC/NUL rejected). No CRLF or NUL injection path into the upstream fetch construction survives the parser stage at this boundary; residual control bytes inside q would be encoded by encodeURIComponent before the fetch."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "Upstream failure responses cannot smuggle attacker-controlled content or unsafe status to the client, including via console.error at route.ts:58",
+        "method": "source",
+        "artifact": null,
+        "result": "On !res.ok the upstream body is only read server-side into console.error (route.ts:57-58); the client receives a static PT-BR message plus an echoed res.status (route.ts:59-62) — no body/header passthrough. The NextResponse.json construction sits inside the try, so any status outside valid range throws into the adjacent catch → generic 500 (route.ts:83-88). No repo-visible attacker source reaches the route.ts:58 sink (TLS-validated newsapi.org; body is upstream-determined); the hypothetical q-echo-in-upstream-error-message variant is third-party behavior not in the repository."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts",
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Response headers on this path derive only from limiter state, never from client-supplied strings",
+        "method": "source",
+        "artifact": null,
+        "result": "route.ts:21 Retry-After = ceil((resetAt-Date.now())/1000) computed from limiter-internal resetAt the client cannot set (worst case '0' at the exact window boundary — cosmetic); route.ts:79 X-RateLimit-Remaining = limiter remaining, floors at 0 once over budget (lib/rate-limit.ts:18-19 hard-codes 0). No untrusted string reaches a response header on this boundary."
+      },
+      {
+        "agent_id": "hunter-a",
+        "reviewed_paths": [
+          "app/api/news/route.ts"
+        ],
+        "invariant": "The upstream JSON is bounded/validated to a stable response contract before relay to anonymous callers",
+        "method": "source",
+        "artifact": null,
+        "result": "route.ts:65-73 relays data.articles unvalidated except a title-present / '[Removed]' filter and a 12-item slice, after an unbounded res.json() read. Every other field passes through as-is. The contract lock exists only at the upstream's grace; the consuming sink is the public browser pages (peer public-pages unit's boundary). Within this unit's boundary the residual exposure is a contract-integrity/hardening item, not a demonstrated trust-boundary crossing."
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "route.ts upstream-response schema validation is absent (res.json() then verbatim relay): consider zod-validating the upstream shape at the boundary of this unit — peer-rendering unit tracks the browser-side consequences."
+      ]
+    }
+  },
+  {
+    "coverage_id": "docker-compose.yml%23deployment%20overlay::docker-compose.yml%23ports%20and%20environment::docker-compose.yml::ATTACK-CLASSES.md%23Obvious%20things",
+    "canonical_refs": {
+      "surface": "docker-compose.yml#deployment overlay",
+      "boundary": "docker-compose.yml#ports and environment",
+      "subsystem": "docker-compose.yml",
+      "attack_class": "ATTACK-CLASSES.md#Obvious things"
+    },
+    "surface": "docker-compose.yml#deployment overlay",
+    "boundary": "docker-compose.yml#ports and environment",
+    "subsystem": "docker-compose.yml",
+    "attack_class": "ATTACK-CLASSES.md#Obvious things",
+    "starting_paths": [
+      "docker-compose.yml",
+      "Dockerfile"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Obvious things",
+    "selected_companion_blocks": [
+      "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+      "CLOUD-AND-DEPLOYMENT.md#Ingress, network, and control-plane attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Configuration and secret lifecycle attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Universal moves",
+      "CLOUD-AND-DEPLOYMENT.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+        "reason": "boot-time npm fetch owned by the peer supply-chain entrypoint unit"
+      },
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+        "reason": "the overlay defines no HTTP parser or cache policy"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-e",
+    "reviewed_paths": [
+      ".dockerignore",
+      ".gitignore",
+      "Dockerfile",
+      "docker-compose.yml",
+      "package.json",
+      "prisma/seed.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "Dockerfile"
+        ],
+        "invariant": "No hardcoded passwords, API keys, tokens, or secrets in the deployment overlay or image definition.",
+        "method": "source",
+        "artifact": null,
+        "result": "Grep (password|secret|apikey|api_key|token|Bearer|-----BEGIN) case-insensitive across ts/tsx/js/prisma/yml/json: docker-compose.yml and Dockerfile contain only ${VAR} interpolations for all secret keys (compose lines 8, 27, 29-35) and no ENV-bearing literal secret (Dockerfile ENV map: DOCKER_BUILD, NODE_ENV, NODE_OPTIONS, PORT, HOSTNAME — lines 15-16, 25-26, 44-45); the only hardcoded credential literal in the codebase is the seed fallback (prisma/seed.ts:8, owned by T11); package-lock token matches are npm module names; no -----BEGIN blocks anywhere."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          ".gitignore",
+          ".dockerignore"
+        ],
+        "invariant": "No .env/.env.local/credentials.json/*.pem/*.key checked in; ignore patterns cover local secret files including from the Docker build context.",
+        "method": "source",
+        "artifact": null,
+        "result": "find for .env*, *.pem, *.key, credentials.json over repo: zero files; git status clean. .gitignore covers .env, .env*.local, *.pem, .env.example, task.md (lines 18, 26-27, 43-44). .dockerignore covers .env, .env.local, .env.*.local, .git (lines 3-6); GAP (hardening only): nested prisma/.env, *.pem, *.key not excluded while COPY . . includes the whole context and runner copies /app/prisma wholesale (Dockerfile:35)."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml"
+        ],
+        "invariant": "Rendered overlay must expose no management plane to the host by default, and every unguarded ${VAR} substitution must fail fast rather than render empty secret values.",
+        "method": "local",
+        "artifact": "agents/hunter-e/artifacts/observed-compose-render.json",
+        "result": "Hand-rolled ${VAR}/${VAR:-def} expansion over an empty variable set (clean-checkout condition; repo ships no .env*) under the sandbox: rendered ports 5432:5432 and 3000:3000; POSTGRES_PASSWORD renders as empty string, no :? required guard exists on any secret key (POSTGRES_PASSWORD, NEXTAUTH_SECRET, CLOUDINARY_API_SECRET, NEWSAPI_KEY, ADMIN_EMAIL/ADMIN_PASSWORD, NEXTAUTH_URL all render ''); DATABASE_URL renders plaintext postgresql://bahia_news:@postgres:5432/bahia_news; no 'db seed' string anywhere in raw or rendered overlay (seed_invoked_by_overlay:false — initial boolean mislabel corrected before rerun); no networks: block (default bridge) and none of read_only/cap_drop/tmpfs/mem_limit/user overrides present."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "Dockerfile",
+          "prisma/seed.ts",
+          "package.json"
+        ],
+        "invariant": "No test/example/seed credential is reachable on a production boot path.",
+        "method": "source",
+        "artifact": null,
+        "result": "Shipped boot path (compose entrypoint: db push + node server.js) and Dockerfile contain no seed invocation; the seeded fallback admin (T11 candidate) is NOT reachable in the deployed boot path by repo evidence alone; reachability requires a manual npm run db:seed whose target environment is owner-observed — cross-referenced to T11 candidate rather than duplicated."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "Dockerfile"
+        ],
+        "invariant": "Debug/dev mode properly gated; cannot be enabled in the shipped overlay.",
+        "method": "source",
+        "artifact": null,
+        "result": "NODE_ENV=production baked in both builder and runner stages (Dockerfile:15-16, 25); compose passes no NODE_ENV, so the one Docker-levered debug path — Prisma query logging, gated on NODE_ENV==='development' (lib/prisma.ts:11) — cannot activate. NEXT_TELEMETRY_DISABLED appears nowhere (0 matches in Dockerfile, compose, next.config) contrary to the run architecture summary — recorded as hardening (architecture errata). No debug flags at this layer."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml"
+        ],
+        "invariant": "The overlay must not expose an admin/debug/internal management endpoint (postgres :5432) to the host by default without network restriction.",
+        "method": "source",
+        "artifact": null,
+        "result": "docker-compose.yml:10-11 unconditionally maps \"${POSTGRES_PORT:-5432}:5432\" with no host-IP prefix and no network isolation override anywhere in the file; the only control on the management plane is POSTGRES_PASSWORD (required but unguarded, renders empty when unset); POSTGRES_USER defaults to 'bahia_news', owner user of the created database. Source-confirmed half (manifest-controlled exposure); decisive third-party reachability of the host interface is a deployment fact (candidate blockers)."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml"
+        ],
+        "invariant": "Transport between containers protected or network scoped to same-principal peers.",
+        "method": "source",
+        "artifact": null,
+        "result": "DATABASE_URL (docker-compose.yml:27) plaintext Postgres protocol, no sslmode enforcement; no networks: block (default bridge, only app+postgres). No lower-trust peer on that network in-file — hardening only; scope fact beyond the file is owner-observed."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "Dockerfile"
+        ],
+        "invariant": "Obvious-things sweep: security TODO/FIXME, dynamic code execution, CORS, TLS, stack traces, dependency-pinning facts at this layer.",
+        "method": "source",
+        "artifact": null,
+        "result": "No TODO/FIXME/HACK/XXX referencing security (regex sweep: zero). No eval()/exec()/child_process/vm/Function()/dynamic import() (JSDoc @type import( annotation next.config.js:24 only — peer config-file ownership). No CORS headers at overlay layer (Access-Control grep zero repo-wide). No error-response surface in overlay. Dependency pinning: lockfile pinned; resolution-level analysis peer-owned (cited only). Mutable base tags node:20-alpine (Dockerfile:1,8,21) and postgres:16-alpine (compose:3) — cited; registry pinning owned by peer entrypoint unit."
+      },
+      {
+        "agent_id": "verifier-j",
+        "reviewed_paths": [
+          "docker-compose.yml"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'docker-compose.yml:10-11.postgres-host-port-publish': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-j/artifacts/observed-compose-render-j.json",
+        "result": "Independent verdict: NEEDS_VALIDATION — empty-env render proves postgres publishes 0.0.0.0:5432 on the host by default with no fail-fast guards; reachable-in-deployment remains the owner blocker. Decisive artifacts: agents/verifier-j/artifacts/observed-compose-render-j.json; agents/verifier-j/artifacts/observed-compose-render-j.mjs. Provenance: sandbox stdout was captured host-side into scratch (approved bind set leaves scratch EROFS); promoted thereafter (attested in the record). Full final record in findings.json ('docker-compose.yml:10-11.postgres-host-port-publish')."
+      }
+    ],
+    "result_fingerprints": [
+      "docker-compose.yml:10-11.postgres-host-port-publish"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "Add NEXT_TELEMETRY_DISABLED=1 to Dockerfile builder (currently absent — build sends Next telemetry).",
+        "Add ${VAR:?required} guards (POSTGRES_PASSWORD, NEXTAUTH_SECRET, ...) so unset secrets fail fast instead of rendering empty strings (feeds T11 scenario B).",
+        ".dockerignore: exclude prisma/.env, *.pem, *.key (COPY . . includes full context; runner copies /app/prisma wholesale).",
+        "DATABASE_URL lacks sslmode; missing networks/read_only/cap_drop/tmpfs/mem_limit/user overrides — hardening, two-service bridge."
+      ],
+      "candidate_format_note": "hunter-e's malformed validation_plan.deployment string ('network: yes; cloud: yes') discarded; authoritative owner checks live in the blockers list — parent normalizes at Phase 3 packaging (content preserved).",
+      "candidate_validation": {
+        "fingerprint": "docker-compose.yml:10-11.postgres-host-port-publish",
+        "verifier": "verifier-j",
+        "decision": "needs_validation",
+        "session": "ses_e80b4137bffe4aD9h0sItskcZ5",
+        "artifacts": [
+          "agents/verifier-j/artifacts/observed-compose-render-j.json",
+          "agents/verifier-j/artifacts/observed-compose-render-j.mjs"
+        ],
+        "decision_summary": "empty-env render proves postgres publishes 0.0.0.0:5432 on the host by default with no fail-fast guards; reachable-in-deployment remains the owner blocker [sandbox stdout was captured host-side into scratch (approved bind set leaves scratch EROFS); promoted thereafter (attested in the record).]"
+      },
+      "final_record_review": {
+        "verifier": "research-j",
+        "decision": "verified",
+        "session": "ses_e80a6f8adffefjE4yhmKIxGREh",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "docker-compose.yml%23entrypoint::package-lock.json%23registry%20pinning::docker-compose.yml::ATTACK-CLASSES.md%23Chained%20vulnerabilities%20and%20trust%20boundaries",
+    "canonical_refs": {
+      "surface": "docker-compose.yml#entrypoint",
+      "boundary": "package-lock.json#registry pinning",
+      "subsystem": "docker-compose.yml",
+      "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries"
+    },
+    "surface": "docker-compose.yml#entrypoint",
+    "boundary": "package-lock.json#registry pinning",
+    "subsystem": "docker-compose.yml",
+    "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "starting_paths": [
+      "docker-compose.yml",
+      "Dockerfile",
+      "package-lock.json",
+      "package.json"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "selected_companion_blocks": [
+      "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Dependency and build-input attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Universal moves",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "runtime posture (ports, secrets, limits) owned by the peer compose overlay unit"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-f",
+    "reviewed_paths": [
+      ".dockerignore",
+      "Dockerfile",
+      "docker-compose.yml",
+      "package-lock.json",
+      "package.json",
+      "next.config.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "Dockerfile",
+          "package.json"
+        ],
+        "invariant": "Boot-time dependency execution must consume the integrity-verified build-installed prisma CLI (lockfile sha512) rather than re-resolving prisma from the ambient registry at every container boot under the secret-bearing app environment.",
+        "method": "local",
+        "artifact": "agents/hunter-f/artifacts/observed-t13-lockfile-handoff.json",
+        "result": "Observed in bounded sandbox (no network, read-only target): app service entrypoint `sh -c \"npx prisma@5.14.0 db push && node server.js\"` (docker-compose.yml:39-40) at every boot under restart:unless-stopped (:23) with env DATABASE_URL, NEXTAUTH_SECRET, CLOUDINARY_API_KEY/SECRET, ADMIN_EMAIL/PASSWORD, NEWSAPI_KEY (:27-35). Dockerfile:6 `npm ci --no-audit --no-fund` installs lockfile-verified prisma@5.14.0 CLI, but the runner stage copies only `node_modules/.prisma` into the runtime image (Dockerfile:36) — not node_modules/prisma/.bin/prisma. Entrypoint references neither lockfile nor local node_modules (entrypointIgnoresLocalPrismaCli=true, entrypointReferencesLockfile=false); compose sets no npm_config_registry/NPM_CONFIG_REGISTRY/NPM_CONFIG_OFFLINE/prefer-offline (npmConfigEnvPresent=[], offlineKnobsInComposeOrDockerfile=false). The verified-node_modules → boot-execution handoff swaps lockfile sha512 trust for version-tag-only registry trust while the container holds every platform secret."
+      },
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "package-lock.json"
+        ],
+        "invariant": "Lockfile registry-pinning sweep: no alternative-registry/mirror resolved hosts, no integrity-less registry entries, lockfileVersion 3.",
+        "method": "local",
+        "artifact": "agents/hunter-f/artifacts/observed-t13-lockfile-handoff.json",
+        "result": "All 658 resolved entries point to https://registry.npmjs.org/ exactly (resolvedHostCounts {registry.npmjs.org: 658}); zero missing integrity; lockfileVersion 3. node_modules/prisma@5.14.0 (non-dev-flagged) and @prisma/client@5.14.0 both sha512. The lockfile chain is intact; the gap is only the boot handoff that does not consume it."
+      },
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "package-lock.json",
+          "docker-compose.yml",
+          "Dockerfile"
+        ],
+        "invariant": "next@14.2.3 advisory-in-lockfile: quote source-confirmed deprecation text; classify who can influence resolution and what execution boundary follows; do not convert the CVE into a confirmed finding.",
+        "method": "source",
+        "artifact": null,
+        "result": "package-lock.json:6653 node_modules/next@14.2.3 deprecated text: \"This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/security-update-2025-12-11 for more details.\" — resolved/integrity-bound (registry.npmjs.org; npm ci consumes it). Exploitation of the advisory requires code-exec elsewhere (public pages with weakened script-src — peer-owned); the advisory is a priority upgrade input (hardening), not a confirmed boundary failure. Upstream patched builds exist is a registry/blog fact (owner check; not this unit's claim)."
+      },
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "Dockerfile",
+          "docker-compose.yml",
+          ".dockerignore",
+          "package.json"
+        ],
+        "invariant": "Build-time advisory suppression and mutability facts: --no-audit on npm ci, absence of any audit step, no registry-redirecting config into build/runtime, engines unbounded.",
+        "method": "source",
+        "artifact": null,
+        "result": "Dockerfile:6 RUN npm ci --no-audit --no-fund — advisory reporting suppressed at the only install point; no npm audit anywhere. No .npmrc anywhere in repo. .dockerignore excludes .git/.env/node_modules. package.json has NO engines field. Compose env has no npm_* keys. Base image mutable tag node:20-alpine on all FROM lines, no @sha256 binding — hardening-mutable-input."
+      },
+      {
+        "agent_id": "verifier-k",
+        "reviewed_paths": [
+          "Dockerfile",
+          "docker-compose.yml",
+          "next.config.js",
+          "package-lock.json"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'docker-compose.yml:39-40.npx-boot-registry-handoff': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-k/artifacts/observed-verifierk-sweep.json",
+        "result": "Independent verdict: NEEDS_VALIDATION — runtime COPY list never ships the prisma CLI, so boot-time npx resolves prisma@5.14.0 from the ambient registry with no integrity pinning; registry-side serving fact remains the owner blocker. Decisive artifacts: agents/verifier-k/artifacts/observed-verifierk-sweep.json; agents/verifier-k/artifacts/observed-verifierk-sweep.mjs. Provenance: char-exact transcription of sandboxed process stdout into the artifact (recipe's --ro-bind / / leaves no writable target scratch; scratchWriteStatus blocked:EROFS, recorded in the artifact note). Full final record in findings.json ('docker-compose.yml:39-40.npx-boot-registry-handoff')."
+      }
+    ],
+    "result_fingerprints": [
+      "docker-compose.yml:39-40.npx-boot-registry-handoff"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "node:20-alpine mutable base tag, no digest binding (Dockerfile:1,8,21) — builder/runtime npm implementation unbounded.",
+        "npm ci --no-audit --no-fund suppresses advisory reporting at the only install point; the in-lockfile next@14.2.3 deprecation (package-lock.json:6653) never surfaces during build.",
+        "package.json lacks engines field.",
+        "remotePatterns hostname-only entries (picsum.photos, media.base44.com, next.config.js:34-41) grant every path; CSP img-src https: already allows any https origin; optimizer allowlist currently dead config (ArticleCard unimported; all other Image usages unoptimized).",
+        "Boot db push makes app availability depend on registry reachability at every start (registry outage → entrypoint fails before server.js)."
+      ],
+      "candidate_format_note": "hunter-f's extra candidate fields (remediation_note, proposed_severity_note) folded into parent packaging at Phase 3 (content preserved).",
+      "candidate_validation": {
+        "fingerprint": "docker-compose.yml:39-40.npx-boot-registry-handoff",
+        "verifier": "verifier-k",
+        "decision": "needs_validation",
+        "session": "ses_e80b4137affe0qSwdGC8ppLKWV",
+        "artifacts": [
+          "agents/verifier-k/artifacts/observed-verifierk-sweep.json",
+          "agents/verifier-k/artifacts/observed-verifierk-sweep.mjs"
+        ],
+        "decision_summary": "runtime COPY list never ships the prisma CLI, so boot-time npx resolves prisma@5.14.0 from the ambient registry with no integrity pinning; registry-side serving fact remains the owner blocker [char-exact transcription of sandboxed process stdout into the artifact (recipe's --ro-bind / / leaves no writable target scratch; scratchWriteStatus blocked:EROFS, recorded in the artifact note).]"
+      },
+      "final_record_review": {
+        "verifier": "research-k",
+        "decision": "verified",
+        "session": "ses_e80a6f8acffeAlt6DuNrOPQABs",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "lib%2Fauth.ts%23loginAttempts%20Map%20%28per-email%20lockout%20ledger%20cardinality%29::lib%2Fauth.ts%23isLockedOut%2FrecordFailedAttempt%20eviction::app%2Fapi%2Fauth::ATTACK-CLASSES.md%23Business%20logic",
+    "canonical_refs": {
+      "surface": "lib/auth.ts#loginAttempts Map (per-email lockout ledger cardinality)",
+      "boundary": "lib/auth.ts#isLockedOut/recordFailedAttempt eviction",
+      "subsystem": "app/api/auth",
+      "attack_class": "ATTACK-CLASSES.md#Business logic"
+    },
+    "surface": "lib/auth.ts#loginAttempts Map (per-email lockout ledger cardinality)",
+    "boundary": "lib/auth.ts#isLockedOut/recordFailedAttempt eviction",
+    "subsystem": "app/api/auth",
+    "attack_class": "ATTACK-CLASSES.md#Business logic",
+    "starting_paths": [
+      "lib/auth.ts",
+      "lib/rate-limit.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Browser-session attack classes",
+        "reason": "lockout threshold state-machine semantics and session/cookie handling are owned by live candidate T6 and T8; this unit engages only ledger cardinality and eviction"
+      },
+      {
+        "block": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+        "reason": "per-IP quota semantics of the sibling ipRequestCounts Map are owned by live candidate T1; this unit engages only the loginAttempts Map instance"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 2,
+    "status": "candidate",
+    "agent_id": "hunter-g",
+    "reviewed_paths": [
+      "app/api/auth/[...nextauth]/route.ts",
+      "lib/auth.ts",
+      "lib/rate-limit.ts",
+      "lib/validations.ts",
+      "middleware.ts",
+      "package-lock.json"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-g",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "lib/validations.ts",
+          "app/api/auth/[...nextauth]/route.ts",
+          "middleware.ts"
+        ],
+        "invariant": "The loginAttempts write set: only post-schema failure modes on the pre-auth credentials REST surface write a per-email ledger entry; upstream gates must return before any write",
+        "method": "source",
+        "artifact": null,
+        "result": "POST /api/auth/[...nextauth] mounts NextAuth(authOptions) directly (app/api/auth/[...nextauth]/route.ts:2,4,6; next-auth resolved 4.24.14 at package-lock.json:6700-6702; middleware.ts:49-51 matcher covers only /admin/* and /api/admin/* so /api/auth/* is not intercepted). CredentialsProvider.authorize (lib/auth.ts:78) enforces in order: checkRateLimit(ip) at lib/auth.ts:81-85 (rejection returns at :84, no ledger write), loginSchema.safeParse at :87-91 (schema-invalid payloads return at :90, no write; keys are post-transform emails — lowercased, trimmed, <=255 chars per lib/validations.ts:4-8), isLockedOut(email) at :95-98 (read-only). The only writers are :104-105 (unknown user OR missing passwordHash OR isActive=false) and :111-112 (wrong password), one Map.set per distinct passing email; clearAttempts(email) at :117 is success-only. LOCKOUT_DURATION_MS = 15*60*1000 = 15 min (lib/auth.ts:10), read at runtime from the verbatim-extracted constant."
+      },
+      {
+        "agent_id": "hunter-g",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "lib/rate-limit.ts"
+        ],
+        "invariant": "Every Map lifecycle operation has an identified cleanup owner; absence of any sweep/eviction/background cleaner means retention is receiver-activity-only",
+        "method": "source",
+        "artifact": null,
+        "result": "Repo-wide grep shows loginAttempts/isLockedOut/recordFailedAttempt/clearAttempts referenced only in lib/auth.ts (13 matches) and zero matches for setInterval/setTimeout/unref/sweep/evict/cron/prune anywhere. Exactly four mutations exist: set at :40; delete at :28 (isLockedOut) which fires only when that SAME identifier is next touched by an authorize() call that passed the IP and schema gates, and only when Date.now() > its lockedUntil — note lockedUntil: 0 for count<5 rows is always already expired, so the touch-time delete covers last-attempt-in-count rows too, but no touch on a never-revisited email ever comes; delete at :44 (clearAttempts) invoked only at :117 on successful login, unreachable for emails that never authenticate. Distinct-instance note for peer T1: the sibling ipRequestCounts Map (lib/rate-limit.ts:1) is a separate process-global with its own window reset; its quota (rate-limit.ts:3-4, 10 authorize calls/min/IP) bounds only the write RATE into loginAttempts, never the retained cardinality of loginAttempts."
+      },
+      {
+        "agent_id": "hunter-g",
+        "reviewed_paths": [
+          "lib/auth.ts",
+          "lib/validations.ts"
+        ],
+        "invariant": "Resource-accumulation class: per-object vs aggregate limit comparison on the per-email lockout ledger",
+        "method": "source",
+        "artifact": null,
+        "result": "Per-object bound exists only inside entry semantics (count reaches MAX_LOGIN_ATTEMPTS=5 -> lockedUntil set for 15 min; threshold semantics owned by peer T6). There is no aggregate limit of any kind: no size cap, no eviction, no TTL computed for count<5 rows (lockedUntil: 0 persists against any clock), no LRU, and no owner-side sweep. The Map is module-global for the only module that imports lib/auth (app/api/auth/[...nextauth]/route.ts:2), i.e. shared in-process state for the lifetime of the Node worker. Email .max(255) and zod normalization (lib/validations.ts:4-8) bound only per-entry key size and merge case/whitespace duplicates; plus-addressing and unique suffixes give unlimited distinct normalized keys, so cardinality is fully attacker-controlled at one retained entry per distinct failed email."
+      },
+      {
+        "agent_id": "hunter-g",
+        "reviewed_paths": [
+          "lib/auth.ts"
+        ],
+        "invariant": "Bounded local growth on the verbatim-extracted pure Map functions (lib/auth.ts:9-12, 24-45): N distinct emails -> N retained entries; natural expiry never sweeps; deletion requires same-identifier touch or success; retention is linear and eviction-free",
+        "method": "local",
+        "artifact": "agents/hunter-g/artifacts/observed-run-output.txt",
+        "result": "Sandboxed run (env -i PATH/HOME only; unshare -U -r -n loopback-only netns; bwrap --ro-bind / / --dev-bind /dev /dev; prlimit --as=4294967296 --nproc=128 --fsize=67108864; node --max-old-space-size=512; timeout 120; Node v26.10.0; exit 0, all assertions pass, zero target-process writes). Lifecycle: 5 distinct emails -> 5 entries; threshold row got lockedUntil = T0+900000 (15 min, matches LOCKOUT_DURATION_MS); advancing the clock past expiry left size=5 (expired lock NOT swept); isLockedOut on that identifier deleted exactly that row and unrelated traffic (50 touches) reclaimed nothing; count<5 rows likewise delete only on same-identifier touch; clearAttempts removed exactly one; an expired-locked row never revisited was still retained well past its expiry. Growth driving the lib/auth.ts:104-105/:111-112 call shape (one recordFailedAttempt per distinct schema-valid email): phases 50,000/150,000/300,000 -> sizes 50,000/150,000/300,000 with no eviction at any phase, ~184 B retained per entry (57.1 MB heapUsed at 300k in the 512 MiB test heap); repeat failures on one identifier added no cardinality."
+      },
+      {
+        "agent_id": "hunter-g",
+        "reviewed_paths": [
+          "app/api/auth/[...nextauth]/route.ts",
+          "middleware.ts",
+          "package-lock.json"
+        ],
+        "invariant": "Pre-auth unauthenticated reachability of the ledger writes and absence of any source-visible upstream/framework bound preventing retention",
+        "method": "source",
+        "artifact": null,
+        "result": "route.ts:4-6 exports the mounted handler as GET/POST with dynamic force; no custom wrapper limits provider dispatch; middleware matcher excludes /api/auth/* (middleware.ts:50) so the credentials callback surface of pinned next-auth 4.24.14 (package-lock.json:6700-6702) reaches authorize() without any authentication requirement (parent-verified pre-auth DB-touching status of the login path). No parser, queue, framework worker, or node_modules bound evicts module-global Map keys on its own."
+      },
+      {
+        "agent_id": "verifier-l",
+        "reviewed_paths": [
+          "app/api/auth/[...nextauth]/route.ts",
+          "lib/auth.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'lib/auth.ts:12-45.login-attempts-ledger-unbounded-cardinality': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-l/artifacts/observed-run-output.txt",
+        "result": "Independent verdict: CONFIRMED — loginAttempts Map retains every distinct failed email for process lifetime with no sweep/eviction/TTL (reproduced at growing cardinality points). Decisive artifacts: agents/verifier-l/artifacts/observed-harness.mjs; agents/verifier-l/artifacts/observed-run-output.txt. Full final record in findings.json ('lib/auth.ts:12-45.login-attempts-ledger-unbounded-cardinality')."
+      }
+    ],
+    "result_fingerprints": [
+      "lib/auth.ts:12-45.login-attempts-ledger-unbounded-cardinality"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "origin": "accepted by post-wave-1 coverage critic (fresh research agent, stop:false, no reassign_ids); the critic's ONLY accepted missing unit",
+      "critic_reason_verbatim": "source-backed coverage gap: lib/auth.ts:12 second Map loginAttempts has no size cap and no sweep — recordFailedAttempt (lib/auth.ts:34-41) writes an entry for every failed valid-schema login (unknown email / null passwordHash / isActive=false at lib/auth.ts:104-107; wrong password at lib/auth.ts:111-114), but isLockedOut (lib/auth.ts:24-32) deletes an entry only when the SAME identifier is next touched with a stale lockedUntil, and clearAttempts (lib/auth.ts:43-45) only on success — so N distinct attacker emails leave N retained entries indefinitely with no global eviction, the exact unbounded-accumulation class T1 proved on ipRequestCounts (200k-entry artifact) yet no unit's invariant engages this instance: T6 checked only that the 5-attempt threshold state machine is broken, T1 only checkRateLimit, T7 only the bcrypt timing asymmetry. Pre-auth reachable (limiter keyed on client-controlled XFF per T1) and locally replicable verbatim (module-level pure Map functions, identical to the sanctioned T1/T6 replication method). Also gates the remediation interplay with T6's fix: once lockout engages, entries persist LOCKOUT_DURATION_MS=15min (lib/auth.ts:10) per attempted email while staying unbounded per distinct email.",
+      "prior_wave_failed_attempt": "none (hunter-d failed on T9/T10, unrelated to this unit)",
+      "candidate_format_note": "parent normalizes hunter-g's trace (split sink entry), confidence.description->reason, and minor transcription mangling into report-schema at Phase 3 packaging (content preserved).",
+      "hardening_notes": [
+        "Lock-threshold interplay (peer T6): any change to the threshold/sentinel logic must keep entries' 15-min LOCKOUT_DURATION_MS persistence in mind — locked rows are retained for the lock duration per attempted email by design, so fixing T6's counter collision alone does not bound ledger cardinality; the aggregate cap and T6's fix should land together.",
+        "Key normalization (lib/validations.ts:8 lowercase+trim) collapses case/whitespace synonym payloads onto a single entry, slightly raising the attacker's per-entry cost, but plus-addressing and unique suffixes still yield unlimited distinct keys.",
+        "The rate limiter (lib/rate-limit.ts:3-4, 10 authorize calls/min/IP) bounds only the write rate into loginAttempts; retained cardinality requires a bound of its own (cited only to distinguish the two Map instances; T1 owns ipRequestCounts quota semantics)."
+      ],
+      "candidate_validation": {
+        "fingerprint": "lib/auth.ts:12-45.login-attempts-ledger-unbounded-cardinality",
+        "verifier": "verifier-l",
+        "decision": "confirmed",
+        "session": "ses_e80b41378ffeLAYI53Ft7SKURR",
+        "artifacts": [
+          "agents/verifier-l/artifacts/observed-harness.mjs",
+          "agents/verifier-l/artifacts/observed-run-output.txt"
+        ],
+        "decision_summary": "loginAttempts Map retains every distinct failed email for process lifetime with no sweep/eviction/TTL (reproduced at growing cardinality points)"
+      },
+      "final_record_review": {
+        "verifier": "research-l",
+        "decision": "verified",
+        "session": "ses_e80a6f8abffeHnhZwwQucw95ID",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "middleware.ts%23%2Fadmin%2F%3Apath%2A::middleware.ts%23authorized%20callback::app%2Fadmin::ATTACK-CLASSES.md%23Access%20control",
+    "canonical_refs": {
+      "surface": "middleware.ts#/admin/:path*",
+      "boundary": "middleware.ts#authorized callback",
+      "subsystem": "app/admin",
+      "attack_class": "ATTACK-CLASSES.md#Access control"
+    },
+    "surface": "middleware.ts#/admin/:path*",
+    "boundary": "middleware.ts#authorized callback",
+    "subsystem": "app/admin",
+    "attack_class": "ATTACK-CLASSES.md#Access control",
+    "starting_paths": [
+      "middleware.ts",
+      "app/(admin)/layout.tsx",
+      "app/(admin)/admin/page.tsx",
+      "app/(admin)/admin/login/page.tsx",
+      "lib/auth-helpers.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Access control",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#JWT verification and claim binding",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules",
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#UI-redress and navigation attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Ordinary CSRF",
+        "reason": "no cookie-authenticated mutation exists at this commit: admin pages are static stubs and /api/admin has no routes"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-d2",
+    "reviewed_paths": [
+      "app/(admin)/admin/login/page.tsx",
+      "app/(admin)/admin/page.tsx",
+      "app/(admin)/layout.tsx",
+      "app/api/auth/[...nextauth]/route.ts",
+      "lib/auth-helpers.ts",
+      "lib/auth.ts",
+      "middleware.ts",
+      "prisma/schema.prisma",
+      "package-lock.json"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "middleware.ts",
+          "lib/auth.ts",
+          "prisma/schema.prisma",
+          "lib/auth-helpers.ts"
+        ],
+        "invariant": "The /admin gate must bind the JWT role claim (role granularity exists: token.role set at login) and authorize the ADMIN/EDITOR distinction, not session presence alone.",
+        "method": "local",
+        "artifact": "agents/hunter-d2/artifacts/observed-role-gate-check.txt",
+        "result": "Verbatim extraction of middleware.ts:36-44 (authorized callback) executed in the parent-approved sandbox loopback netns: EDITOR-role token and ADMIN-role token both return authorized=true for /admin and /admin/configuracoes; token absence returns false only; the callback source contains no token.role read (regex check on the verbatim function source = 0 matches). Source review completes the trace the sandbox cannot: token.role is written from the credential user at lib/auth.ts:134, DB default role is EDITOR (prisma/schema.prisma:19), and the only role-discriminating code (lib/auth-helpers.ts:25-33) has zero call sites (grep across all .ts*). ADMIN==EDITOR at this gate."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "middleware.ts",
+          "app/(admin)/admin/login/page.tsx",
+          "app/api/auth/[...nextauth]/route.ts",
+          "lib/auth.ts"
+        ],
+        "invariant": "The attacker-influenced callbackUrl written by the anonymous redirect (middleware.ts:18) must pass a scheme/origin allowlist before any post-login navigation is emitted.",
+        "method": "source",
+        "artifact": null,
+        "result": "middleware.ts:18 is the only writer in the app (grep over all .ts: one callbackUrl occurrence); it copies req.nextUrl.pathname unvalidated (any pathname starting with /admin except exactly /admin/login). The login page is a static server component (app/(admin)/admin/login/page.tsx:7-17) with no signIn call, no useSearchParams/useRouter/wrapper, and no client fetch — it ignores the parameter entirely. The only conceivable consumer is the mounted NextAuth REST handler (app/api/auth/[...nextauth]/route.ts:1-7 exports NextAuth GET/POST with pages.signIn=/admin/login at lib/auth.ts:68-70), whose redirect-callback/callback-endpoint handling of callbackUrl is next-auth@4.24.14-internal and not source-visible in this repo (no node_modules) — recorded as the needs_validation candidate middleware.ts:18.callbackUrl-echo-unvalidated instead of asserted."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "middleware.ts"
+        ],
+        "invariant": "Anonymous access to /api/admin/* must be rejected with a bounded JSON 401, and the gate must cover the whole matched tree.",
+        "method": "source",
+        "artifact": null,
+        "result": "middleware.ts:22-24 returns a 401 JSON body (\"Não autorizado\") for any /api/admin/* pathname without token; matcher middleware.ts:49-51 includes /api/admin/:path*. Notably the authorized callback itself returns true for /api/admin paths (middleware.ts:36-44 falls through to return true — isAdminRoute starts with /admin), so the API gate exists only in the body branch. The matcher protects a nonexistent tree: 0 tracked files under app/api/admin (git ls-files; glob) — future-tree posture, cite-only per assignment."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "middleware.ts",
+          "app/(admin)/layout.tsx",
+          "app/(admin)/admin/page.tsx",
+          "app/(admin)/admin/login/page.tsx"
+        ],
+        "invariant": "Login-page and dashboard redirects cannot expose admin content or create redirect loops (auth-presence state machine).",
+        "method": "source",
+        "artifact": null,
+        "result": "Logged-in users on /admin/login are redirected to /admin (middleware.ts:12-14); anonymous /admin/* redirects to /admin/login (callbackUrl set at :18). The guard is pathname===\"/admin/login\" (exact) so /admin/login/anything is treated as a protected admin route. Redirect targets are built from req.url with fixed paths (\"/admin\", \"/admin/login\") — no user data in the target path. Admin pages/layout are static server components with no data read (file review: app/(admin)/layout.tsx:3-14, app/(admin)/admin/page.tsx:7-13) — nothing to disclose beyond navigation labels."
+      },
+      {
+        "agent_id": "hunter-d2",
+        "reviewed_paths": [
+          "middleware.ts"
+        ],
+        "invariant": "X-Content-Type-Options / X-Frame-Options: DENY / Referrer-Policy are applied to all responses served for matched admin and admin-API paths.",
+        "method": "source",
+        "artifact": null,
+        "result": "Headers are set only on the NextResponse.next() fall-through branch (middleware.ts:26-30); the early returns (:13 redirect to /admin, :19 redirect to /admin/login, :23 the 401 JSON) leave those three headers unset. Matcher limits the effect to /admin|/api/admin requests (public pages, /api/auth/*, /api/news receive none from this file; next.config.js CSP/HSTS is the peer-owned source for site-wide headers). Non-finding (hardening): no state-changing action exists at this commit; XFO: DENY read-only shells is hardening, not a gate."
+      },
+      {
+        "agent_id": "verifier-g",
+        "reviewed_paths": [
+          "app/(admin)/admin/page.tsx",
+          "app/(admin)/layout.tsx",
+          "lib/auth-helpers.ts",
+          "lib/auth.ts",
+          "middleware.ts",
+          "prisma/schema.prisma"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'middleware.ts:36-44.token-presence-only-gate': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-g/artifacts/observed-gate-dispatch.txt",
+        "result": "Independent verdict: CONFIRMED — the /admin gate evaluates !!token only; an EDITOR-role token authorizes identically (verbatim-closure reproduction). Decisive artifacts: agents/verifier-g/artifacts/observed-gate-dispatch.mjs; agents/verifier-g/artifacts/observed-gate-dispatch.txt. Provenance: sandbox run identical to verifier-a's except the single recorded addition -- a writable --bind of the scratch directory (parent recipe leaves scratch EROFS). Full final record in findings.json ('middleware.ts:36-44.token-presence-only-gate')."
+      },
+      {
+        "agent_id": "verifier-h",
+        "reviewed_paths": [
+          "app/(admin)/admin/login/page.tsx",
+          "app/api/auth/[...nextauth]/route.ts",
+          "middleware.ts",
+          "package-lock.json"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'middleware.ts:18.callbackUrl-echo-unvalidated': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-h/artifacts/observed-callbackurl-echo-check.txt",
+        "result": "Independent verdict: NEEDS_VALIDATION — middleware echoes pathname into callbackUrl unvalidated; at this commit the in-repo login page never consumes it, so consumption rests on next-auth@4.24.14 internals (owner blocker). Decisive artifacts: agents/verifier-h/artifacts/observed-callbackurl-echo-check.mjs; agents/verifier-h/artifacts/observed-callbackurl-echo-check.txt. Full final record in findings.json ('middleware.ts:18.callbackUrl-echo-unvalidated')."
+      }
+    ],
+    "result_fingerprints": [
+      "middleware.ts:36-44.token-presence-only-gate",
+      "middleware.ts:18.callbackUrl-echo-unvalidated"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "reassignment_note": "hunter-d returned no structured result within its assignment (result absent); units returned to planned and reassigned to a fresh owner (hunter-d2), wave 1, no archived attempt (no terminal evidence was produced).",
+      "hardening_notes": [
+        "middleware.ts early returns (:13, :19, :23) ship without the X-Frame-Options/X-Content-Type-Options/Referrer-Policy headers that the fall-through branch sets (:26-30); uniform header policy on all returned responses.",
+        "Authorized callback returns true for /api/admin pathnames (:36-44 falls through at :43); the 401 gate lives only in the body branch (:22-23) — fold the API predicate into the callback when /api/admin routes land.",
+        "matcher :path* semantics include /admin and /api/admin themselves; the protected API tree currently has zero tracked files — future-posture only."
+      ],
+      "candidate_format_note": "parent normalizes d2 trace/conditions shapes into report-schema during Phase 3 packaging (content preserved).",
+      "candidate_validation": {
+        "fingerprint": "middleware.ts:18.callbackUrl-echo-unvalidated",
+        "verifier": "verifier-h",
+        "decision": "needs_validation",
+        "session": "ses_e80b4137dffeYCifCZ1SFVFVnb",
+        "artifacts": [
+          "agents/verifier-h/artifacts/observed-callbackurl-echo-check.mjs",
+          "agents/verifier-h/artifacts/observed-callbackurl-echo-check.txt"
+        ],
+        "decision_summary": "middleware echoes pathname into callbackUrl unvalidated; at this commit the in-repo login page never consumes it, so consumption rests on next-auth@4.24.14 internals (owner blocker)"
+      },
+      "final_record_review": {
+        "verifier": "research-h",
+        "decision": "verified",
+        "session": "ses_e80a6f8afffecsdpnY2Va4JqvK",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  },
+  {
+    "coverage_id": "next.config.js%23security%20headers%20and%20image%20remotePatterns::next.config.js%23images%20remotePatterns::next.config.js::ATTACK-CLASSES.md%23Resource%20and%20file%20handling",
+    "canonical_refs": {
+      "surface": "next.config.js#security headers and image remotePatterns",
+      "boundary": "next.config.js#images remotePatterns",
+      "subsystem": "next.config.js",
+      "attack_class": "ATTACK-CLASSES.md#Resource and file handling"
+    },
+    "surface": "next.config.js#security headers and image remotePatterns",
+    "boundary": "next.config.js#images remotePatterns",
+    "subsystem": "next.config.js",
+    "attack_class": "ATTACK-CLASSES.md#Resource and file handling",
+    "starting_paths": [
+      "next.config.js",
+      "middleware.ts"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Resource and file handling",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#UI-redress and navigation attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules",
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+        "reason": "image fetch cost is bounded (20 feed items); the unit reviews grants, not availability"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "hunter-f",
+    "reviewed_paths": [
+      "app/(public)/artigo/[slug]/page.tsx",
+      "app/(public)/categoria/[slug]/page.tsx",
+      "app/(public)/page.tsx",
+      "components/articles/card.tsx",
+      "docker-compose.yml",
+      "middleware.ts",
+      "next.config.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "next.config.js",
+          "middleware.ts"
+        ],
+        "invariant": "Header completeness and internal agreement on all routes: CSP directive validity, framing denial on every path, no dual interpretation between static headers and middleware-set headers, HSTS semantics renderable in-repo.",
+        "method": "source",
+        "artifact": null,
+        "result": "next.config.js:44-76 applies to source \"/(.*)\": CSP built only from constant literals (no user input enters cspString), HSTS max-age=63072000 includeSubDomains preload (:55), X-Content-Type-Options nosniff (:58), X-Frame-Options DENY (:62), Referrer-Policy (:66), Permissions-Policy (:70). Framing refused everywhere (frame-ancestors 'none' :13 AND XFO DENY :63 — same direction). CSP parses: script-src 'self' 'unsafe-eval' 'unsafe-inline' (:3); img-src 'self' https: data: blob: (:6); connect-src 'self' https://newsapi.org https://api.cloudinary.com (:7 — no wildcard); frame-src 'self' (:8); object-src 'none' (:10); base-uri/form-action 'self' (:11-12). middleware.ts:28-30 re-sets three headers on /admin|/api/admin byte-identical (benign duplication). HSTS preload-list submission is an owner/registry fact (hardening note only)."
+      },
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "next.config.js",
+          "docker-compose.yml"
+        ],
+        "invariant": "images.remotePatterns grant inventory: who supplies each hostname/path input and the exact scope each grant asserts.",
+        "method": "source",
+        "artifact": null,
+        "result": "next.config.js:28-42 three grants: (1) https://res.cloudinary.com with pathname /${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/** (:32) — interpolated value is operator-set env passed by compose (:30), same-trust operator; interpolated field is pathname, hostname static literal. (2) https://picsum.photos (:34-37) and (3) https://media.base44.com (:38-41) — hostname-only path-agnostic grants over entire hosts (breadth fact in config). Optimizer path/subdomain matching semantics are Next internals absent from repo; since the optimizer has no live consumer (next check) the semantics gap is not decisive — grant breadth = hardening/pending-semantics, not a boundary crossing."
+      },
+      {
+        "agent_id": "hunter-f",
+        "reviewed_paths": [
+          "components/articles/card.tsx",
+          "app/(public)/page.tsx",
+          "app/(public)/artigo/[slug]/page.tsx",
+          "app/(public)/categoria/[slug]/page.tsx"
+        ],
+        "invariant": "Consumer-liveness for the remotePatterns grants: does any repo-reachable rendered image URL flow through the /_next/image optimizer, or is the allowlist dead config (peer owns public rendering; facts cited as load/loadability only).",
+        "method": "source",
+        "artifact": null,
+        "result": "grep: next/image imported in 5 files; every reachable usage sets unoptimized (page.tsx:156,160,250,254; artigo:81,86; categoria:63,67). The only non-unoptimized Image is components/articles/card.tsx:26 — ArticleCard has zero imports anywhere (dead code). The /_next/image optimizer is never exercised on any current route: remotePatterns is dead-but-broad config → priority/hardening, not a boundary crossing. With unoptimized images, CSP img-src governs rendering and its https: catchall allows direct loading from ANY https origin — the narrow optimizer allowlist provides no defense-in-depth (hardening)."
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [
+        "Restrict or delete remotePatterns grants when image flow is next touched; verify next@14.2.3 optimizer matching semantics before tightening.",
+        "Cloudinary grant pathname interpolated from operator env at build and runtime — set the var in the Docker build stage for determinism (grant mismatches are functional, not broadening)."
+      ]
+    }
+  },
+  {
+    "coverage_id": "prisma%2Fseed.ts%23admin%20bootstrap::prisma%2Fseed.ts%23env%20fallback::prisma::ATTACK-CLASSES.md%23Cryptography%20and%20secrets",
+    "canonical_refs": {
+      "surface": "prisma/seed.ts#admin bootstrap",
+      "boundary": "prisma/seed.ts#env fallback",
+      "subsystem": "prisma",
+      "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets"
+    },
+    "surface": "prisma/seed.ts#admin bootstrap",
+    "boundary": "prisma/seed.ts#env fallback",
+    "subsystem": "prisma",
+    "attack_class": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "starting_paths": [
+      "prisma/seed.ts",
+      "docker-compose.yml",
+      "package.json"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "selected_companion_blocks": [
+      "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+      "CLOUD-AND-DEPLOYMENT.md#Configuration and secret lifecycle attack classes",
+      "CLOUD-AND-DEPLOYMENT.md#Universal moves",
+      "CLOUD-AND-DEPLOYMENT.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+        "reason": "seed is a CLI/DB script; no HTTP or identity-processing surface"
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "hunter-e",
+    "reviewed_paths": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "package.json",
+      "prisma/schema.prisma",
+      "prisma/seed.ts"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "prisma/seed.ts"
+        ],
+        "invariant": "Privileged account bootstrap must not install a publicly-known default credential when ADMIN_EMAIL/ADMIN_PASSWORD are unset or empty; missing configuration must fail closed.",
+        "method": "local",
+        "artifact": "agents/hunter-e/artifacts/observed-seed-fallback.txt",
+        "result": "Bounded fixture replicating verbatim prisma/seed.ts:7-8 fallback expressions + seed.ts:10-24 create flow under an empty environment (env -i, unshare netns, read-only target, prlimit caps; parent-approved sandbox): unset env selects adminEmail=admin@bahianews.com.br, adminPassword=admin123 and takes the create branch; empty-string env (what compose ${VAR} renders for unset keys) also selects the fallback because || treats \"\" as falsy; provided env values bypass the fallback; create-if-missing guard never resets an existing admin; exactly one ADMIN account per run. No real bcrypt hash exercised (no node_modules) — hash-of-fallback strength asserted from source only (seed.ts:15, cost 12)."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "prisma/seed.ts",
+          "prisma/schema.prisma"
+        ],
+        "invariant": "Seed upsert semantics must not overwrite/reset an existing privileged account, and the seed must not create any second privileged account.",
+        "method": "source",
+        "artifact": null,
+        "result": "seed.ts:10-14 does findUnique by email and only creates when absent — no user.update anywhere (repo grep: prisma.user.create only at seed.ts:17), so re-running seed never resets an existing admin password; the created account is exactly one, name 'Administrador', role Role.ADMIN (seed.ts:19-23). schema.prisma:19 defaults role EDITOR; Role.ADMIN consumed by login surfaces (peer-owned). No ADMIN_PASSWORD length/format validation exists — hashed raw."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "prisma/seed.ts",
+          "docker-compose.yml",
+          "Dockerfile",
+          "package.json"
+        ],
+        "invariant": "Whether the seed can run against a production database must be settled by deployment observation, and no shipped deployment path may invoke it silently.",
+        "method": "source",
+        "artifact": null,
+        "result": "Seed is wired as a manual command only: package.json:14 ('db:seed': 'prisma db seed') with prisma.seed='tsx prisma/seed.ts' (package.json:18-20). docker-compose.yml:39-40 entrypoint runs only 'npx prisma@5.14.0 db push && node server.js' — no db seed; Dockerfile RUN/CMD steps run prisma generate + build, no seed. Shipped overlay/Dockerfile never executes seed; whether any operator/CI/runbook runs npm run db:seed against the production DB is an owner-observed fact (candidate blocker, not inferred)."
+      },
+      {
+        "agent_id": "hunter-e",
+        "reviewed_paths": [
+          "prisma/seed.ts"
+        ],
+        "invariant": "Credential strength: any bootstrap password must be strong even when sourced from config, and the plaintext value must not be readable from the repository.",
+        "method": "source",
+        "artifact": null,
+        "result": "bcrypt cost 12 (seed.ts:15) adequate, but the hashed value is the source-visible constant 'admin123' (seed.ts:8) whose hash any attacker can reproduce; the plaintext fallback is readable in every clone (external repo visibility of origin https://github.com/Kaua033/bahia-news.git is not source-settled — candidate blocker). Failure mode is fail-open: unset config silently continues with known credentials."
+      },
+      {
+        "agent_id": "verifier-i",
+        "reviewed_paths": [
+          "docker-compose.yml",
+          "package.json",
+          "prisma/seed.ts"
+        ],
+        "invariant": "Independent Phase-3 candidate validation of fingerprint 'prisma/seed.ts:7-27.admin-credential-fallback': fresh session with no hunter context; all trace/evidence files, lines, scopes, conditions, each decision branch, and the record schema were checked against repository source and bounded local evidence per the verbatim candidate-verifier contract.",
+        "method": "local",
+        "artifact": "agents/verifier-i/artifacts/observed-replay-verifier-i.txt",
+        "result": "Independent verdict: NEEDS_VALIDATION — hardcoded admin fallback on unset/empty ADMIN_EMAIL/ADMIN_PASSWORD verified; whether any deployed environment ever ran the seed remains the owner blocker. Decisive artifacts: agents/verifier-i/artifacts/observed-replay-verifier-i.mjs; agents/verifier-i/artifacts/observed-replay-verifier-i.txt. Full final record in findings.json ('prisma/seed.ts:7-27.admin-credential-fallback')."
+      }
+    ],
+    "result_fingerprints": [
+      "prisma/seed.ts:7-27.admin-credential-fallback"
+    ],
+    "unresolved": [],
+    "bookkeeping": {
+      "hardening_notes": [],
+      "artifact_note": "validation_plan referenced observed-seed-fallback.mjs — fixture also promoted alongside .txt",
+      "candidate_validation": {
+        "fingerprint": "prisma/seed.ts:7-27.admin-credential-fallback",
+        "verifier": "verifier-i",
+        "decision": "needs_validation",
+        "session": "ses_e80b4137cffeZEXu2Hh2lnEymk",
+        "artifacts": [
+          "agents/verifier-i/artifacts/observed-replay-verifier-i.mjs",
+          "agents/verifier-i/artifacts/observed-replay-verifier-i.txt"
+        ],
+        "decision_summary": "hardcoded admin fallback on unset/empty ADMIN_EMAIL/ADMIN_PASSWORD verified; whether any deployed environment ever ran the seed remains the owner blocker"
+      },
+      "final_record_review": {
+        "verifier": "research-i",
+        "decision": "verified",
+        "session": "ses_e80a6f8aeffe3i0sLOe8MAg1en",
+        "disposition": "phase5 record verifier returned verified with no replacement; record retained in findings.json"
+      }
+    }
+  }
+]

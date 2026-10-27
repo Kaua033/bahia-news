@@ -1,0 +1,34 @@
+{
+  "run_id": "bahia-news-run-1",
+  "repo": "bahia-news",
+  "target": "/home/kaua/bahia-news",
+  "source_ref": "4337dfb457e4ceb2eba9b3abf17a695b5ac67c4d (2026-06-28 14:30:51 -0300), worktree dirty: no",
+  "profile": "standard",
+  "scope_paths": ["**"],
+  "budget": null,
+  "execution_policy": "sandboxed-source-and-local-only",
+  "companions_under_consideration": [
+    "WEB-PROTOCOL-AND-AUTH.md",
+    "CLIENT-SIDE.md",
+    "CLOUD-AND-DEPLOYMENT.md",
+    "DATA-ISOLATION-AND-LIFECYCLE.md",
+    "SUPPLY-CHAIN-AND-RELEASE.md",
+    "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md"
+  ],
+  "prior_run_paths": [],
+  "prior_ledgers": "none found (no compatible prior coverage-ledger.json exists for this repo)",
+  "shared_files": {
+    "owner": "parent",
+    "files": [
+      "run-metadata.json",
+      "architecture.md",
+      "coverage-ledger.json",
+      "findings.json",
+      "REPORT.md",
+      "FINDINGS-DETAIL.md",
+      "NEEDS-VALIDATION.md"
+    ],
+    "writable_only_by": "parent (trusted parent-side code); agents write only to their agents/<agent-id>/scratch/"
+  },
+  "run_status": "complete"
+}
