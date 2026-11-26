@@ -9,6 +9,12 @@ coverage/
 # next.js
 .next/
 out/
+.open-next/
+.wrangler/
+
+# cloudflare local env
+.dev.vars*
+cloudflare-env.d.ts
 
 # production
 build/

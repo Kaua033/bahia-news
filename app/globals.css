@@ -4,6 +4,10 @@
 
 @layer base {
   :root {
+    --font-inter: "Inter", system-ui, sans-serif;
+    --font-jetbrains-mono: "JetBrains Mono", monospace;
+    --font-playfair-display: "Playfair Display", serif;
+
     --background: 42 22% 94%;
     --foreground: 210 20% 12%;
     --accent: 12 65% 45%;

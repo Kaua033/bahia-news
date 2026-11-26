@@ -24,6 +24,9 @@ const cspString = Object.entries(cspDirectives)
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: process.env.DOCKER_BUILD === "true" ? "standalone" : undefined,
+  experimental: {
+    serverComponentsExternalPackages: ["@prisma/client", ".prisma/client"],
+  },
   images: {
     remotePatterns: [
       {
@@ -77,3 +80,6 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+
+const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare")
+initOpenNextCloudflareForDev()
