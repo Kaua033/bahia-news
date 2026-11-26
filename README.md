@@ -31,6 +31,9 @@ Variáveis de ambiente:
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | não | Upload de imagens |
 | `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | não | Upload de imagens |
 
+Use **secrets** no dashboard (eles nunca são apagados em um deploy). Se preferir
+variáveis normais, mantenha `--keep-vars` no deploy command.
+
 ## Deploy no Cloudflare Workers
 
 O projeto usa [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare)
@@ -44,7 +47,7 @@ Ao conectar o repositório em **Workers & Pages → Create → Connect to Git**,
 | Campo | Valor |
 | --- | --- |
 | Build command | `npm run cf:build` (ou `npm run build`) |
-| Deploy command | `npx wrangler deploy` |
+| Deploy command | `npx wrangler deploy --keep-vars` |
 | Preview command | `npx wrangler versions upload` |
 
 O `npm run build` roda o build do Next e, no `postbuild`, converte o resultado
