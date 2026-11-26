@@ -43,13 +43,14 @@ Ao conectar o repositório em **Workers & Pages → Create → Connect to Git**,
 
 | Campo | Valor |
 | --- | --- |
-| Build command | `npm run cf:build` |
+| Build command | `npm run cf:build` (ou `npm run build`) |
 | Deploy command | `npx wrangler deploy` |
 | Preview command | `npx wrangler versions upload` |
 
-`npm run cf:build` roda o build do Next, converte para o formato do Workers e
+O `npm run build` roda o build do Next e, no `postbuild`, converte o resultado
+para o formato do Workers (`opennextjs-cloudflare build --skipNextBuild`) e
 remove do bundle o engine nativo do Prisma e os engines MySQL/SQLite que não são
-usados (sem isso o Worker passa de 10 MB).
+usados. Sem essa poda o Worker passa de 10 MB; com ela fica em ~1 MB comprimido.
 
 ### Variáveis e secrets
 
@@ -87,4 +88,4 @@ npm run deploy     # build + deploy (requer wrangler login)
   (NewsAPI) funciona, mas login/área admin não persistem no Cloudflare até essa
   adaptação ser feita (`@prisma/adapter-neon` ou Hyperdrive + `@prisma/adapter-pg`).
 - Login e CRUD do admin são stubs.
-- `npm run build` sozinho gera o build do Next, não o Worker. Use `npm run cf:build`.
+- `npm run build` já gera o Worker; `npm run cf:build` é um alias explícito.

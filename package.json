@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "postbuild": "node scripts/cf-postbuild.mjs",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
@@ -14,10 +15,10 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:build": "opennextjs-cloudflare build && node scripts/prune-opennext.mjs",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "preview": "npm run cf:build && opennextjs-cloudflare preview",
+    "cf:build": "npm run build",
+    "deploy": "npm run cf:build && wrangler deploy",
+    "upload": "npm run cf:build && wrangler versions upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "prisma": {

@@ -23,7 +23,7 @@ const cspString = Object.entries(cspDirectives)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: process.env.DOCKER_BUILD === "true" ? "standalone" : undefined,
+  output: "standalone",
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", ".prisma/client"],
   },
